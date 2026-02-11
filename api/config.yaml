@@ -1,0 +1,29 @@
+# api/config.yaml
+# Настройки API-сервера
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+  workers: 1
+  log_level: "info"
+
+cors:
+  allow_origins:
+    - "*"
+  allow_methods:
+    - "*"
+  allow_headers:
+    - "*"
+
+storage:
+  type: "sqlite"
+  path: "./data/secureguard.db"
+
+auth:
+  enabled: false
+  api_key: ""
+
+rate_limit:
+  enabled: false
+  requests_per_minute: 60

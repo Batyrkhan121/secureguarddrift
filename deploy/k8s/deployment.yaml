@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: secureguard-drift
+  namespace: secureguard-drift
+  labels:
+    app: secureguard-drift
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secureguard-drift
+  template:
+    metadata:
+      labels:
+        app: secureguard-drift
+        version: v1
+    spec:
+      securityContext:
+        runAsNonRoot: true
+      containers:
+        - name: secureguard-drift
+          image: secureguard-drift:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: secureguard-drift-config
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            readOnlyRootFilesystem: false
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+      volumes:
+        - name: data
+          emptyDir: {}

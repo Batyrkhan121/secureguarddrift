@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: secureguard-drift
+  labels:
+    app: secureguard-drift
+    purpose: pilot

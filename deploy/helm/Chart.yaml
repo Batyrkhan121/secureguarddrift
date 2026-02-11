@@ -1,0 +1,13 @@
+apiVersion: v2
+name: secureguarddrift
+description: Helm chart for SecureGuardDrift — service dependency drift detection
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+maintainers:
+  - name: SecureGuardDrift Team
+keywords:
+  - security
+  - drift-detection
+  - service-mesh
+  - observability

@@ -1,0 +1,131 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "api-gateway"}}
+        ]
+      },
+      "scopeSpans": [
+        {
+          "spans": [
+            {
+              "traceId": "trace001",
+              "spanId": "span001",
+              "parentSpanId": null,
+              "name": "GET /api/users",
+              "startTimeUnixNano": 1707566400000000000,
+              "endTimeUnixNano": 1707566400050000000,
+              "status": {"code": 0},
+              "attributes": [
+                {"key": "http.method", "value": {"stringValue": "GET"}},
+                {"key": "http.url", "value": {"stringValue": "/api/users"}},
+                {"key": "http.status_code", "value": {"intValue": "200"}}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "user-service"}}
+        ]
+      },
+      "scopeSpans": [
+        {
+          "spans": [
+            {
+              "traceId": "trace001",
+              "spanId": "span002",
+              "parentSpanId": "span001",
+              "name": "SELECT users",
+              "startTimeUnixNano": 1707566400005000000,
+              "endTimeUnixNano": 1707566400040000000,
+              "status": {"code": 0},
+              "attributes": [
+                {"key": "db.system", "value": {"stringValue": "postgresql"}},
+                {"key": "db.statement", "value": {"stringValue": "SELECT * FROM users"}}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "api-gateway"}}
+        ]
+      },
+      "scopeSpans": [
+        {
+          "spans": [
+            {
+              "traceId": "trace002",
+              "spanId": "span003",
+              "parentSpanId": null,
+              "name": "POST /api/orders",
+              "startTimeUnixNano": 1707566401000000000,
+              "endTimeUnixNano": 1707566401200000000,
+              "status": {"code": 0},
+              "attributes": [
+                {"key": "http.method", "value": {"stringValue": "POST"}},
+                {"key": "http.status_code", "value": {"intValue": "201"}}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "order-service"}}
+        ]
+      },
+      "scopeSpans": [
+        {
+          "spans": [
+            {
+              "traceId": "trace002",
+              "spanId": "span004",
+              "parentSpanId": "span003",
+              "name": "create_order",
+              "startTimeUnixNano": 1707566401010000000,
+              "endTimeUnixNano": 1707566401150000000,
+              "status": {"code": 0},
+              "attributes": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "resource": {
+        "attributes": [
+          {"key": "service.name", "value": {"stringValue": "payment-service"}}
+        ]
+      },
+      "scopeSpans": [
+        {
+          "spans": [
+            {
+              "traceId": "trace002",
+              "spanId": "span005",
+              "parentSpanId": "span004",
+              "name": "process_payment",
+              "startTimeUnixNano": 1707566401050000000,
+              "endTimeUnixNano": 1707566401140000000,
+              "status": {"code": 0},
+              "attributes": [
+                {"key": "payment.amount", "value": {"doubleValue": 99.99}}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

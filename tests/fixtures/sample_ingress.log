@@ -1,0 +1,6 @@
+10.0.0.1 - - [10/Feb/2026:12:00:01 +0000] "GET /api/users HTTP/1.1" 200 1234 "-" "curl/7.68.0" 128 0.045 [default-user-service-8080] [] 10.0.1.5:8080 1234 0.044 200 abc123
+10.0.0.2 - - [10/Feb/2026:12:00:02 +0000] "POST /api/orders HTTP/1.1" 201 567 "-" "python-requests/2.28.0" 256 0.120 [default-order-service-8080] [] 10.0.1.6:8080 567 0.118 201 def456
+10.0.0.1 - - [10/Feb/2026:12:00:03 +0000] "GET /api/products HTTP/1.1" 200 2048 "-" "Mozilla/5.0" 64 0.032 [default-product-service-8080] [] 10.0.1.7:8080 2048 0.031 200 ghi789
+10.0.0.3 - - [10/Feb/2026:12:00:04 +0000] "POST /api/payments HTTP/1.1" 500 128 "-" "python-requests/2.28.0" 512 0.250 [default-payment-service-8080] [] 10.0.1.8:8080 128 0.248 500 jkl012
+10.0.0.1 - - [10/Feb/2026:12:00:05 +0000] "GET /api/users/123 HTTP/1.1" 200 512 "-" "curl/7.68.0" 64 0.038 [default-user-service-8080] [] 10.0.1.5:8080 512 0.037 200 mno345
+10.0.0.4 - - [10/Feb/2026:12:00:06 +0000] "DELETE /api/orders/456 HTTP/1.1" 204 0 "-" "httpie/3.0" 32 0.065 [default-order-service-8080] [] 10.0.1.6:8080 0 0.063 204 pqr678

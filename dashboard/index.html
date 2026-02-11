@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="google" content="notranslate">
+<title>SecureGuard Drift</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a1a2e;--surface:#16213e;--border:#0f3460;--text:#e0e0e0;--muted:#8888aa;
+  --critical:#ff4444;--high:#ff8800;--medium:#ffcc00;--low:#44aa44;
+  --svc:#4fc3f7;--db:#ff8a65;--gw:#81c784}
+body{font-family:sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--surface);border-bottom:1px solid var(--border)}
+header h1{font-size:1.15rem;flex-shrink:0}
+header select,header button{background:#0f3460;color:var(--text);border:1px solid var(--border);border-radius:4px;padding:5px 8px;font-size:.8rem;cursor:pointer}
+header button:hover{background:#1a4a8a}
+.spacer{flex:1}
+.main{display:grid;grid-template-columns:1fr 370px;flex:1;overflow:hidden}
+@media(max-width:900px){.main{grid-template-columns:1fr;grid-template-rows:50vh 1fr}}
+#cy{background:var(--surface);border-right:1px solid var(--border);position:relative}
+.sidebar{display:flex;flex-direction:column;overflow-y:auto;background:var(--bg);padding-bottom:50px}
+.sidebar-hdr{padding:10px 14px;font-weight:600;font-size:.95rem;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:1}
+.feed{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;
+  transition:border-color .2s,background .3s;border-left:4px solid var(--muted)}
+.card:hover{border-color:#5588cc}
+.card.sev-critical{border-left-color:var(--critical)}.card.sev-high{border-left-color:var(--high)}
+.card.sev-medium{border-left-color:var(--medium)}.card.sev-low{border-left-color:var(--low)}
+.card.flash{background:#3a3a5a}
+.card-head{display:flex;justify-content:space-between;align-items:center}
+.card-title{font-size:.85rem;font-weight:600}
+.badge{font-family:monospace;font-size:.75rem;padding:2px 7px;border-radius:10px;color:#000;font-weight:700}
+.badge-critical{background:var(--critical);color:#fff}.badge-high{background:var(--high)}
+.badge-medium{background:var(--medium)}.badge-low{background:var(--low)}
+.card-body{display:none;margin-top:8px;font-size:.8rem;line-height:1.5;color:var(--muted)}
+.card.open .card-body{display:block}
+.card-body b{color:var(--text)}
+.card-body ul{margin:4px 0 4px 18px}
+.summary-bar{position:fixed;bottom:0;left:0;right:0;height:40px;background:#12122a;border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;gap:18px;font-size:.82rem;font-family:monospace;z-index:100}
+.summary-bar span{white-space:nowrap}
+.s-critical{color:var(--critical)}.s-high{color:var(--high)}.s-medium{color:var(--medium)}.s-low{color:var(--low)}
+#popup{position:absolute;background:#2a2a4a;border:1px solid #4fc3f7;border-radius:8px;padding:12px;
+  max-width:300px;font-size:13px;z-index:50;line-height:1.5;display:none;pointer-events:auto;cursor:default}
+#popup b{color:var(--text)}
+#popup .p-row{color:var(--muted);margin:2px 0}
+#popup .p-row.red{color:var(--critical)}
+#popup .p-link{color:var(--svc);cursor:pointer;text-decoration:underline;margin-top:4px;display:inline-block}
+</style>
+</head>
+<body class="notranslate">
+<header>
+  <h1>SecureGuard Drift</h1>
+  <select id="sel-base"><option value="">Baseline...</option></select>
+  <select id="sel-curr"><option value="">Current...</option></select>
+  <button id="btn-analyze">Analyze</button>
+  <span class="spacer"></span>
+  <button id="btn-export">Export Report</button>
+</header>
+<div class="main">
+  <div id="cy"><div id="popup"></div></div>
+  <div class="sidebar">
+    <div class="sidebar-hdr">Drift Feed</div>
+    <div class="feed" id="feed"></div>
+  </div>
+</div>
+<div class="summary-bar" id="summary"></div>
+
+<script src="/static/interaction.js"></script>
+<script>
+let cy,driftData=[],graphData={nodes:[],edges:[]};
+
+async function loadSnapshots(){
+  let snaps;
+  try{snaps=await(await fetch('/api/snapshots')).json()}
+  catch(err){console.error('Failed to load snapshots:',err);showError('Cannot connect to API server');return}
+  const sb=document.getElementById('sel-base'),sc=document.getElementById('sel-curr');
+  sb.innerHTML='<option value="">Baseline...</option>';
+  sc.innerHTML='<option value="">Current...</option>';
+  snaps.forEach(s=>{const o=`<option value="${s.snapshot_id}">${s.snapshot_id.slice(0,8)} (${s.timestamp_start})</option>`;
+    sb.innerHTML+=o;sc.innerHTML+=o});
+  if(snaps.length>=2){sb.value=snaps[snaps.length-2].snapshot_id;sc.value=snaps[snaps.length-1].snapshot_id}
+}
+
+function initCy(){
+  cy=cytoscape({container:document.getElementById('cy'),
+    style:[
+      {selector:'node',style:{'label':'data(name)','text-valign':'bottom','text-margin-y':6,
+        'font-size':11,'color':'#e0e0e0','width':36,'height':36,'text-outline-width':2,'text-outline-color':'#1a1a2e',
+        'transition-property':'width height','transition-duration':'0.15s'}},
+      {selector:'node[node_type="service"]',style:{'background-color':'#4fc3f7'}},
+      {selector:'node[node_type="database"]',style:{'background-color':'#ff8a65','shape':'barrel'}},
+      {selector:'node[node_type="gateway"]',style:{'background-color':'#81c784','shape':'diamond'}},
+      {selector:'node.hover',style:{'width':42,'height':42}},
+      {selector:'edge',style:{'width':'data(w)','line-color':'#335577','target-arrow-color':'#335577',
+        'target-arrow-shape':'triangle','curve-style':'bezier','arrow-scale':0.8,
+        'transition-property':'width line-color target-arrow-color','transition-duration':'0.15s'}},
+      {selector:'edge.error',style:{'line-color':'#ff4444','target-arrow-color':'#ff4444'}},
+      {selector:'edge.drift-critical',style:{'line-color':'#ff4444','target-arrow-color':'#ff4444','width':3}},
+      {selector:'edge.drift-high',style:{'line-color':'#ff8800','target-arrow-color':'#ff8800','width':2.5}},
+      {selector:'edge.drift-medium',style:{'line-color':'#ffcc00','target-arrow-color':'#ffcc00','width':2}},
+      {selector:'edge.highlight',style:{'line-color':'#ff4444','target-arrow-color':'#ff4444','width':5,
+        'z-index':999,'overlay-color':'#ff4444','overlay-padding':4,'overlay-opacity':0.25}},
+      {selector:'edge.hover-bright',style:{'width':4,'z-index':10}},
+      {selector:'node.hover-conn',style:{'width':42,'height':42}}
+    ],
+    layout:{name:'cose',animate:false,nodeDimensionsIncludeLabels:true,padding:30}
+  });
+}
+
+async function loadGraph(){
+  try{graphData=await(await fetch('/api/graph/latest')).json()}
+  catch(err){console.error('Failed to load graph:',err);showError('Failed to load service graph');return}
+  const maxReq=Math.max(1,...graphData.edges.map(e=>e.request_count));
+  const elems=[];
+  graphData.nodes.forEach(n=>elems.push({data:{id:n.name,name:n.name,node_type:n.node_type,namespace:n.namespace}}));
+  graphData.edges.forEach(e=>{const w=1+4*(e.request_count/maxReq);
+    const el={data:{id:e.source+'->'+e.destination,source:e.source,target:e.destination,w:w.toFixed(1),
+      request_count:e.request_count,error_count:e.error_count,error_rate:e.error_rate,
+      avg_latency_ms:e.avg_latency_ms,p99_latency_ms:e.p99_latency_ms}};
+    if(e.error_rate>0.05) el.classes='error';
+    elems.push(el)});
+  cy.elements().remove();cy.add(elems);
+  cy.layout({name:'cose',animate:false,nodeDimensionsIncludeLabels:true,padding:30}).run();
+}
+
+async function loadDrift(baseId,currId){
+  let url='/api/drift/';
+  if(baseId&&currId) url+=`?baseline_id=${baseId}&current_id=${currId}`;
+  let data;
+  try{data=await(await fetch(url)).json()}
+  catch(err){console.error('Failed to load drift:',err);showError('Failed to load drift analysis');return}
+  driftData=data.events||[];
+  renderFeed();renderSummary();
+  colorEdgesBySeverity(cy,driftData);
+  syncDriftFeedWithGraph(cy,driftData);
+}
+
+function renderFeed(){
+  const feed=document.getElementById('feed');
+  if(!driftData.length){feed.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">No drift events</div>';return}
+  feed.innerHTML=driftData.map((e,i)=>`
+    <div class="card sev-${e.severity}" data-idx="${i}" data-src="${e.source}" data-dst="${e.destination}"
+         onclick="toggleCard(this)">
+      <div class="card-head">
+        <span class="card-title">${e.title}</span>
+        <span class="badge badge-${e.severity}">${e.risk_score}</span>
+      </div>
+      <div class="card-body">
+        <b>What changed:</b> ${e.what_changed}<br><br>
+        <b>Why risk:</b><ul>${e.why_risk.map(r=>'<li>'+r+'</li>').join('')}</ul>
+        <b>Affected:</b> ${e.affected.join(', ')}<br>
+        <b>Recommendation:</b> ${e.recommendation}
+      </div>
+    </div>`).join('');
+}
+
+function renderSummary(){
+  const c={critical:0,high:0,medium:0,low:0};
+  driftData.forEach(e=>{if(e.severity in c)c[e.severity]++});
+  document.getElementById('summary').innerHTML=
+    `<span>${driftData.length} events</span><span>|</span>`+
+    `<span class="s-critical">${c.critical} critical</span><span>|</span>`+
+    `<span class="s-high">${c.high} high</span><span>|</span>`+
+    `<span class="s-medium">${c.medium} medium</span><span>|</span>`+
+    `<span class="s-low">${c.low} low</span>`;
+}
+
+function showError(msg){
+  document.getElementById('feed').innerHTML=
+    '<div style="text-align:center;padding:40px;color:var(--critical)">'+msg+'<br><br>'+
+    '<button onclick="init()" style="background:#0f3460;color:#e0e0e0;border:1px solid #0f3460;'+
+    'border-radius:4px;padding:6px 16px;cursor:pointer">Retry</button></div>';
+}
+
+function toggleCard(el){
+  const wasOpen=el.classList.contains('open');
+  document.querySelectorAll('.card.open').forEach(c=>c.classList.remove('open'));
+  if(!wasOpen){
+    el.classList.add('open');
+    highlightEdge(cy,el.dataset.src,el.dataset.dst);
+  }
+}
+
+document.getElementById('btn-analyze').onclick=()=>{
+  const b=document.getElementById('sel-base').value,c=document.getElementById('sel-curr').value;
+  if(b&&c) loadDrift(b,c); else loadDrift();
+};
+document.getElementById('btn-export').onclick=()=>{window.location='/api/report/md'};
+
+async function init(){
+  initCy();await loadSnapshots();await loadGraph();await loadDrift();
+  initInteractions();
+}
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: secureguard-drift-config
+  namespace: secureguard-drift
+  labels:
+    app: secureguard-drift
+data:
+  SECUREGUARD_PORT: "8000"
+  SECUREGUARD_LOG_LEVEL: "info"
+  SECUREGUARD_DATA_DIR: "/app/data"

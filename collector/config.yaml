@@ -1,0 +1,40 @@
+# collector/config.yaml
+# Настройки источников данных
+
+sources:
+  ingress:
+    enabled: true
+    format: "nginx"           # nginx | envoy | json
+    log_path: "/var/log/nginx/access.log"
+    watch: true               # следить за изменениями файла
+    poll_interval_sec: 10
+
+  otel:
+    enabled: true
+    protocol: "http"          # http | grpc
+    host: "0.0.0.0"
+    port: 4318                # 4317 для gRPC, 4318 для HTTP
+    tls:
+      enabled: false
+      cert_path: ""
+      key_path: ""
+
+  # Дополнительные источники (будущее расширение)
+  kubernetes:
+    enabled: false
+    kubeconfig: ""
+    namespaces:
+      - "default"
+      - "production"
+
+processing:
+  batch_size: 100
+  flush_interval_sec: 30
+  dedup_window_sec: 60
+
+output:
+  graph_builder:
+    enabled: true
+  storage:
+    type: "sqlite"            # sqlite | file
+    path: "./data/secureguard.db"
