@@ -1,10 +1,6 @@
 # api/server.py
 # FastAPI-сервер SecureGuard Drift
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 import csv
 from datetime import datetime
 
@@ -66,8 +62,10 @@ def _bootstrap() -> None:
         snap = build_snapshot(filter_by_time_window(records, s, e), s, e)
         store.save_snapshot(snap)
 
-_bootstrap()
 
+@app.on_event("startup")
+def on_startup():
+    _bootstrap()
 
 
 # ---------------------------------------------------------------------------

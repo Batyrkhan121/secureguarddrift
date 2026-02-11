@@ -1,10 +1,6 @@
 # drift/detector.py
 # Сравнение двух снапшотов (baseline vs current): поиск drift-событий
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from dataclasses import dataclass, field
 from graph.models import Snapshot, Edge
 

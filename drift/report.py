@@ -1,10 +1,6 @@
 # drift/report.py
 # Генерация Markdown-отчёта по drift-анализу
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from datetime import datetime
 from graph.models import Snapshot
 from drift.explainer import ExplainCard
