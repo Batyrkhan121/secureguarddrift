@@ -1,6 +1,7 @@
 # drift/report.py
 # Генерация Markdown-отчёта по drift-анализу
 
+import os
 from datetime import datetime
 from graph.models import Snapshot
 from drift.explainer import ExplainCard

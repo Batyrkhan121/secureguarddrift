@@ -1,6 +1,7 @@
 # api/server.py
 # FastAPI-сервер SecureGuard Drift
 
+import os
 import csv
 from datetime import datetime
 
