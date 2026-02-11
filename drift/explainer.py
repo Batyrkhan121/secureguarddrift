@@ -1,10 +1,6 @@
 # drift/explainer.py
 # Генерация человекочитаемых объяснений для drift-событий
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from dataclasses import dataclass, field
 from drift.detector import DriftEvent
 from drift.rules import evaluate_rules

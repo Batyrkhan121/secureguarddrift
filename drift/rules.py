@@ -1,10 +1,6 @@
 # drift/rules.py
 # Набор правил для оценки серьёзности drift-события
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from dataclasses import dataclass
 from drift.detector import DriftEvent
 

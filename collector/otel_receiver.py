@@ -1,7 +1,6 @@
 # collector/otel_receiver.py
 # Приём OTEL-трасс (gRPC или HTTP)
 
-import json
 import logging
 from typing import List, Dict, Optional, Callable
 from dataclasses import dataclass, field
@@ -87,7 +86,7 @@ class OTELReceiver:
                         duration_ms = (span.end_time - span.start_time).total_seconds() * 1000
                         edges.append({
                             "source": parent.service_name,
-                            "target": span.service_name,
+                            "destination": span.service_name,
                             "operation": span.operation_name,
                             "duration_ms": duration_ms,
                             "status_code": span.status_code,

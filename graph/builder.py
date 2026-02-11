@@ -1,10 +1,6 @@
 # graph/builder.py
 # Построение Snapshot из списка записей лога
 
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 from datetime import datetime
 
 from graph.models import Node, Edge, Snapshot

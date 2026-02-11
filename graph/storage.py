@@ -1,10 +1,7 @@
 # graph/storage.py
 # SQLite хранилище для снапшотов
 
-import sys
 import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
 import sqlite3
 from datetime import datetime
 
