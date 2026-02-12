@@ -33,7 +33,7 @@ DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 # Bootstrap: fill DB with mock data if empty
 # ---------------------------------------------------------------------------
 def _bootstrap() -> None:
-    if store.list_snapshots():
+    if store.list_snapshots(tenant_id="default"):
         return
     csv_path = os.path.join(DATA_DIR, "mock_ingress.csv")
     if not os.path.exists(csv_path):
@@ -47,7 +47,7 @@ def _bootstrap() -> None:
     windows = get_time_windows(records, window_hours=1)
     for s, e in windows:
         snap = build_snapshot(filter_by_time_window(records, s, e), s, e)
-        store.save_snapshot(snap)
+        store.save_snapshot(snap, tenant_id="default")
 
 
 @asynccontextmanager
@@ -96,12 +96,12 @@ async def root():
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "snapshots_count": len(store.list_snapshots())}
+    return {"status": "ok", "snapshots_count": len(store.list_snapshots(tenant_id=None))}
 
 
 @app.get("/api/snapshots")
 async def list_snapshots():
-    return store.list_snapshots()
+    return store.list_snapshots(tenant_id=None)
 
 
 

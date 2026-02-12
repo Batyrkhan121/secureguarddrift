@@ -43,7 +43,7 @@ class TestWeek1Integration(unittest.TestCase):
         for s, e in cls.windows:
             chunk = filter_by_time_window(cls.records, s, e)
             snap = build_snapshot(chunk, s, e)
-            cls.store.save_snapshot(snap)
+            cls.store.save_snapshot(snap, tenant_id="default")
             cls.snapshots.append(snap)
 
     @classmethod
@@ -86,7 +86,7 @@ class TestWeek1Integration(unittest.TestCase):
 
     def test_load_snapshot_matches_original(self):
         orig = self.snapshots[0]
-        loaded = self.store.load_snapshot(orig.snapshot_id)
+        loaded = self.store.load_snapshot(orig.snapshot_id, tenant_id="default")
         self.assertIsNotNone(loaded)
         orig_keys = sorted(e.edge_key() for e in orig.edges)
         load_keys = sorted(e.edge_key() for e in loaded.edges)
@@ -94,7 +94,7 @@ class TestWeek1Integration(unittest.TestCase):
         self.assertEqual(len(orig.nodes), len(loaded.nodes))
 
     def test_get_latest_two(self):
-        pair = self.store.get_latest_two()
+        pair = self.store.get_latest_two(tenant_id="default")
         self.assertIsNotNone(pair)
         prev, latest = pair
         self.assertLess(prev.timestamp_start, latest.timestamp_start)

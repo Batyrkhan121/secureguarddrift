@@ -4,13 +4,14 @@
 from datetime import datetime, timezone
 from typing import Literal, Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 
 from graph.storage import SnapshotStore
 from ml.baseline import build_baseline
 from ml.feedback import FeedbackRecord, FeedbackStore, calculate_feedback_modifier
 from ml.whitelist import SuppressRule, WhitelistEntry, WhitelistStore
+from api.routes import get_tenant_id
 
 router = APIRouter(prefix="/api", tags=["ml"])
 
@@ -48,7 +49,7 @@ class SuppressRuleRequest(BaseModel):
 
 # Endpoints
 @router.post("/feedback")
-async def submit_feedback(req: FeedbackRequest):
+async def submit_feedback(req: FeedbackRequest, request: Request):
     """Сохраняет user feedback на drift событие."""
     feedback = FeedbackRecord(
         feedback_id=None,
@@ -79,7 +80,7 @@ async def submit_feedback(req: FeedbackRequest):
 
 
 @router.get("/whitelist")
-async def get_whitelist():
+async def get_whitelist(request: Request):
     """Возвращает список всех whitelisted edges."""
     entries = whitelist_store.list_whitelist()
     return {
@@ -99,7 +100,7 @@ async def get_whitelist():
 
 
 @router.post("/whitelist")
-async def add_to_whitelist(req: WhitelistRequest):
+async def add_to_whitelist(req: WhitelistRequest, request: Request):
     """Добавляет edge в whitelist."""
     entry = WhitelistEntry(
         entry_id=None,
@@ -115,7 +116,7 @@ async def add_to_whitelist(req: WhitelistRequest):
 
 
 @router.delete("/whitelist/{source}/{destination}")
-async def remove_from_whitelist(source: str, destination: str):
+async def remove_from_whitelist(source: str, destination: str, request: Request):
     """Удаляет edge из whitelist."""
     deleted = whitelist_store.remove_from_whitelist((source, destination))
 
@@ -126,10 +127,11 @@ async def remove_from_whitelist(source: str, destination: str):
 
 
 @router.get("/baseline/{source}/{destination}")
-async def get_baseline(source: str, destination: str):
+async def get_baseline(source: str, destination: str, request: Request):
     """Возвращает baseline профиль для edge."""
+    tenant_id = get_tenant_id(request)
     # Загружаем последние снапшоты
-    snapshots = snapshot_store.list_snapshots(limit=24)
+    snapshots = snapshot_store.list_snapshots(tenant_id=tenant_id)
 
     if not snapshots:
         raise HTTPException(status_code=404, detail="No snapshots available")

@@ -1,7 +1,7 @@
 # api/routes/policy_routes.py
 # API эндпоинты для NetworkPolicy предложений
 
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, HTTPException, Request, Response
 from policy.storage import PolicyStore
 from policy.renderer import to_yaml, to_yaml_bundle
 
@@ -25,7 +25,7 @@ def get_store() -> PolicyStore:
 
 
 @router.get("/")
-async def list_policies(status: str = None):
+async def list_policies(request: Request, status: str = None):
     """Возвращает список предложенных NetworkPolicy.
 
     Query params:
@@ -46,7 +46,7 @@ async def list_policies(status: str = None):
 
 
 @router.get("/{policy_id}")
-async def get_policy(policy_id: str):
+async def get_policy(policy_id: str, request: Request):
     """Возвращает детали одной policy."""
     store = get_store()
     policy = store.get_policy(policy_id)
@@ -58,7 +58,7 @@ async def get_policy(policy_id: str):
 
 
 @router.get("/{policy_id}/yaml")
-async def download_policy_yaml(policy_id: str):
+async def download_policy_yaml(policy_id: str, request: Request):
     """Скачивает YAML одной policy для kubectl apply."""
     store = get_store()
     policy = store.get_policy(policy_id)
@@ -89,7 +89,7 @@ async def download_policy_yaml(policy_id: str):
 
 
 @router.get("/bundle/download")
-async def download_policies_bundle(status: str = "pending"):
+async def download_policies_bundle(request: Request, status: str = "pending"):
     """Скачивает все policies как один YAML файл с разделителями."""
     store = get_store()
     policies = store.list_policies(status=status)
@@ -122,7 +122,7 @@ async def download_policies_bundle(status: str = "pending"):
 
 
 @router.post("/{policy_id}/approve")
-async def approve_policy(policy_id: str):
+async def approve_policy(policy_id: str, request: Request):
     """Помечает policy как одобренную."""
     store = get_store()
     success = store.update_status(policy_id, "approved")
@@ -134,7 +134,7 @@ async def approve_policy(policy_id: str):
 
 
 @router.post("/{policy_id}/reject")
-async def reject_policy(policy_id: str):
+async def reject_policy(policy_id: str, request: Request):
     """Помечает policy как отклоненную."""
     store = get_store()
     success = store.update_status(policy_id, "rejected")

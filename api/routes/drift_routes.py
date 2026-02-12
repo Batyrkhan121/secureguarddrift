@@ -2,12 +2,13 @@
 # Роутер для drift-анализа
 
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from graph.models import Snapshot
 from graph.storage import SnapshotStore
 from drift.detector import detect_drift
 from drift.scorer import score_all_events
 from drift.explainer import explain_all
+from api.routes import get_tenant_id
 
 router = APIRouter(prefix="/api/drift", tags=["drift"])
 
@@ -28,14 +29,15 @@ def _resolve_pair(
     store: SnapshotStore,
     baseline_id: Optional[str],
     current_id: Optional[str],
+    tenant_id: str,
 ) -> tuple[Snapshot, Snapshot]:
     if baseline_id and current_id:
-        b = store.load_snapshot(baseline_id)
-        c = store.load_snapshot(current_id)
+        b = store.load_snapshot(baseline_id, tenant_id=tenant_id)
+        c = store.load_snapshot(current_id, tenant_id=tenant_id)
         if b is None or c is None:
             raise HTTPException(status_code=404, detail={"error": "Snapshot not found"})
         return b, c
-    pair = store.get_latest_two()
+    pair = store.get_latest_two(tenant_id=tenant_id)
     if pair is None:
         raise HTTPException(status_code=404, detail={"error": "Need at least 2 snapshots"})
     return pair
@@ -64,11 +66,13 @@ def _run_drift(baseline: Snapshot, current: Snapshot) -> dict:
 
 @router.get("/summary")
 async def drift_summary(
+    request: Request,
     baseline_id: Optional[str] = Query(None),
     current_id: Optional[str] = Query(None),
     store: SnapshotStore = Depends(get_store),
 ):
-    baseline, current = _resolve_pair(store, baseline_id, current_id)
+    tenant_id = get_tenant_id(request)
+    baseline, current = _resolve_pair(store, baseline_id, current_id, tenant_id)
     events = detect_drift(baseline, current)
     scored = score_all_events(events)
     counts = {"total": len(scored), "critical": 0, "high": 0, "medium": 0, "low": 0}
@@ -80,9 +84,11 @@ async def drift_summary(
 
 @router.get("/")
 async def drift_analysis(
+    request: Request,
     baseline_id: Optional[str] = Query(None),
     current_id: Optional[str] = Query(None),
     store: SnapshotStore = Depends(get_store),
 ):
-    baseline, current = _resolve_pair(store, baseline_id, current_id)
+    tenant_id = get_tenant_id(request)
+    baseline, current = _resolve_pair(store, baseline_id, current_id, tenant_id)
     return _run_drift(baseline, current)

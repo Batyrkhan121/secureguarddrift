@@ -4,7 +4,7 @@
 import os
 import tempfile
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 from graph.models import Snapshot
 from graph.storage import SnapshotStore
@@ -12,6 +12,7 @@ from drift.detector import detect_drift
 from drift.scorer import score_all_events
 from drift.explainer import explain_all
 from drift.report import generate_report
+from api.routes import get_tenant_id
 
 router = APIRouter(prefix="/api/report", tags=["report"])
 
@@ -28,13 +29,13 @@ def get_store() -> SnapshotStore:
     return _store
 
 
-def _pair(store: SnapshotStore, bid: Optional[str], cid: Optional[str]):
+def _pair(store: SnapshotStore, bid: Optional[str], cid: Optional[str], tenant_id: str):
     if bid and cid:
-        b, c = store.load_snapshot(bid), store.load_snapshot(cid)
+        b, c = store.load_snapshot(bid, tenant_id=tenant_id), store.load_snapshot(cid, tenant_id=tenant_id)
         if b is None or c is None:
             raise HTTPException(404, detail={"error": "Snapshot not found"})
         return b, c
-    pair = store.get_latest_two()
+    pair = store.get_latest_two(tenant_id=tenant_id)
     if pair is None:
         raise HTTPException(404, detail={"error": "Need at least 2 snapshots"})
     return pair
@@ -48,11 +49,13 @@ def _build_cards(baseline: Snapshot, current: Snapshot):
 
 @router.get("/md")
 async def report_md(
+    request: Request,
     baseline_id: Optional[str] = Query(None),
     current_id: Optional[str] = Query(None),
     store: SnapshotStore = Depends(get_store),
 ):
-    b, c = _pair(store, baseline_id, current_id)
+    tenant_id = get_tenant_id(request)
+    b, c = _pair(store, baseline_id, current_id, tenant_id)
     scored, cards, _, _ = _build_cards(b, c)
     fd, tmp = tempfile.mkstemp(suffix=".md")
     os.close(fd)
@@ -63,11 +66,13 @@ async def report_md(
 
 @router.get("/json")
 async def report_json(
+    request: Request,
     baseline_id: Optional[str] = Query(None),
     current_id: Optional[str] = Query(None),
     store: SnapshotStore = Depends(get_store),
 ):
-    b, c = _pair(store, baseline_id, current_id)
+    tenant_id = get_tenant_id(request)
+    b, c = _pair(store, baseline_id, current_id, tenant_id)
     scored, cards, _, _ = _build_cards(b, c)
     sev = {"critical": 0, "high": 0, "medium": 0, "low": 0}
     for _, _, s in scored:

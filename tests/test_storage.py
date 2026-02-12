@@ -52,8 +52,8 @@ class TestSnapshotStore:
         )
         
         # Save and load
-        snapshot_store.save_snapshot(original)
-        loaded = snapshot_store.load_snapshot("test-snap-001")
+        snapshot_store.save_snapshot(original, tenant_id="t1")
+        loaded = snapshot_store.load_snapshot("test-snap-001", tenant_id="t1")
         
         # Verify data is preserved
         assert loaded is not None
@@ -76,7 +76,7 @@ class TestSnapshotStore:
 
     def test_load_snapshot_returns_none_for_nonexistent_id(self, snapshot_store):
         """Test load_snapshot() returns None for non-existent ID"""
-        result = snapshot_store.load_snapshot("nonexistent-id")
+        result = snapshot_store.load_snapshot("nonexistent-id", tenant_id="t1")
         assert result is None
 
     def test_list_snapshots_returns_correct_list(self, snapshot_store):
@@ -104,12 +104,12 @@ class TestSnapshotStore:
             edges=[],
         )
         
-        snapshot_store.save_snapshot(snap1)
-        snapshot_store.save_snapshot(snap2)
-        snapshot_store.save_snapshot(snap3)
+        snapshot_store.save_snapshot(snap1, tenant_id="t1")
+        snapshot_store.save_snapshot(snap2, tenant_id="t1")
+        snapshot_store.save_snapshot(snap3, tenant_id="t1")
         
         # List snapshots
-        snapshots = snapshot_store.list_snapshots()
+        snapshots = snapshot_store.list_snapshots(tenant_id="t1")
         
         assert len(snapshots) == 3
         assert snapshots[0]["snapshot_id"] == "snap-001"
@@ -122,7 +122,7 @@ class TestSnapshotStore:
     def test_get_latest_two_returns_none_when_less_than_two(self, snapshot_store):
         """Test get_latest_two() returns None when < 2 snapshots"""
         # No snapshots
-        assert snapshot_store.get_latest_two() is None
+        assert snapshot_store.get_latest_two(tenant_id="t1") is None
         
         # One snapshot
         snap = Snapshot(
@@ -132,8 +132,8 @@ class TestSnapshotStore:
             nodes=[Node(name="a")],
             edges=[],
         )
-        snapshot_store.save_snapshot(snap)
-        assert snapshot_store.get_latest_two() is None
+        snapshot_store.save_snapshot(snap, tenant_id="t1")
+        assert snapshot_store.get_latest_two(tenant_id="t1") is None
 
     def test_get_latest_two_returns_correct_tuple(self, snapshot_store):
         """Test get_latest_two() returns (previous, latest) tuple correctly"""
@@ -160,12 +160,12 @@ class TestSnapshotStore:
             edges=[],
         )
         
-        snapshot_store.save_snapshot(snap1)
-        snapshot_store.save_snapshot(snap2)
-        snapshot_store.save_snapshot(snap3)
+        snapshot_store.save_snapshot(snap1, tenant_id="t1")
+        snapshot_store.save_snapshot(snap2, tenant_id="t1")
+        snapshot_store.save_snapshot(snap3, tenant_id="t1")
         
         # Get latest two
-        result = snapshot_store.get_latest_two()
+        result = snapshot_store.get_latest_two(tenant_id="t1")
         
         assert result is not None
         previous, latest = result
@@ -182,7 +182,7 @@ class TestSnapshotStore:
             nodes=[Node(name="old-node")],
             edges=[Edge(source="a", destination="b", request_count=100)],
         )
-        snapshot_store.save_snapshot(snap_v1)
+        snapshot_store.save_snapshot(snap_v1, tenant_id="t1")
         
         # Save updated version with same ID
         snap_v2 = Snapshot(
@@ -192,13 +192,13 @@ class TestSnapshotStore:
             nodes=[Node(name="new-node")],
             edges=[Edge(source="x", destination="y", request_count=200)],
         )
-        snapshot_store.save_snapshot(snap_v2)
+        snapshot_store.save_snapshot(snap_v2, tenant_id="t1")
         
         # Verify only one snapshot exists and it has new data
-        snapshots = snapshot_store.list_snapshots()
+        snapshots = snapshot_store.list_snapshots(tenant_id="t1")
         assert len(snapshots) == 1
         
-        loaded = snapshot_store.load_snapshot("snap-001")
+        loaded = snapshot_store.load_snapshot("snap-001", tenant_id="t1")
         assert len(loaded.nodes) == 1
         assert loaded.nodes[0].name == "new-node"
         assert len(loaded.edges) == 1

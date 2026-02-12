@@ -63,8 +63,8 @@ def test_store(tmp_path):
         ],
     )
     
-    store.save_snapshot(baseline)
-    store.save_snapshot(current)
+    store.save_snapshot(baseline, tenant_id="default")
+    store.save_snapshot(current, tenant_id="default")
     
     return store
 
@@ -253,7 +253,7 @@ class TestDriftEndpointWithNoData:
             nodes=[Node(name="a")],
             edges=[],
         )
-        store.save_snapshot(snap)
+        store.save_snapshot(snap, tenant_id="default")
         
         client = TestClient(app)
         
