@@ -152,7 +152,7 @@
 | test_builder.py | 15 | 15 | 0 | ✅ |
 | test_smoke.py | 14 | 14 | 0 | ✅ |
 | test_cache.py | 14 | 14 | 0 | ✅ |
-| test_week16_rca.py | 13 | 10 | 3 | ✅ (skip: no DB) |
+| test_week16_rca.py | 13 | 11 | 2 | ✅ (skip: no DB) |
 | test_week11_database.py | 13 | 13 | 0 | ✅ |
 | test_websocket.py | 13 | 13 | 0 | ✅ |
 | test_models.py | 12 | 12 | 0 | ✅ |

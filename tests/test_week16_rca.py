@@ -1,5 +1,6 @@
 """Week 16 tests: RCA integration (API endpoints + algorithm verification)."""
 
+import sqlite3
 import unittest
 import os
 import sys
@@ -168,7 +169,7 @@ class TestAPIEndpoints(unittest.TestCase):
         # Get a snapshot_id first
         try:
             r = self.client.get("/api/snapshots")
-        except Exception:
+        except (OSError, RuntimeError, sqlite3.OperationalError):
             self.skipTest("Database not available")
         if r.status_code != 200 or not r.json():
             self.skipTest("No snapshots available")
@@ -180,7 +181,7 @@ class TestAPIEndpoints(unittest.TestCase):
     def test_blast_radius_endpoint(self):
         try:
             r = self.client.get("/api/snapshots")
-        except Exception:
+        except (OSError, RuntimeError, sqlite3.OperationalError):
             self.skipTest("Database not available")
         if r.status_code != 200 or not r.json():
             self.skipTest("No snapshots available")
