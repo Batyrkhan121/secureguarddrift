@@ -138,10 +138,16 @@ class DriftDataset:
             label = 1 if self.labels.get(edge_key) == "anomalous" else 0
             labels.append(label)
 
+        edge_attr = (
+            np.array(edge_attrs, dtype=np.float32)
+            if edge_attrs
+            else np.zeros((0, 10), dtype=np.float32)
+        )
+
         return {
             "x": x,
             "edge_index": np.array([src_idx, dst_idx], dtype=np.int64),
-            "edge_attr": np.array(edge_attrs, dtype=np.float32) if edge_attrs else np.zeros((0, 10), dtype=np.float32),
+            "edge_attr": edge_attr,
             "y": np.array(labels, dtype=np.int64),
         }
 
