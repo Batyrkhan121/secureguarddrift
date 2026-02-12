@@ -3,6 +3,7 @@
 
 import os
 import csv
+from contextlib import asynccontextmanager
 from datetime import datetime
 
 from fastapi import FastAPI
@@ -21,27 +22,6 @@ from api.routes.report_routes import router as report_router, init_store as init
 # ---------------------------------------------------------------------------
 DASHBOARD_DIR = os.path.join(os.path.dirname(__file__), "..", "dashboard")
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
-
-app = FastAPI(title="SecureGuardDrift API", version="0.1.0")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Static files
-app.mount("/static", StaticFiles(directory=DASHBOARD_DIR), name="static")
-
-store = SnapshotStore(os.path.join(DATA_DIR, "snapshots.db"))
-init_graph_store(store)
-init_drift_store(store)
-init_report_store(store)
-app.include_router(graph_router)
-app.include_router(drift_router)
-app.include_router(report_router)
-
 
 # ---------------------------------------------------------------------------
 # Bootstrap: fill DB with mock data if empty
@@ -64,9 +44,31 @@ def _bootstrap() -> None:
         store.save_snapshot(snap)
 
 
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     _bootstrap()
+    yield
+
+
+app = FastAPI(title="SecureGuardDrift API", version="0.1.0", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Static files
+app.mount("/static", StaticFiles(directory=DASHBOARD_DIR), name="static")
+
+store = SnapshotStore(os.path.join(DATA_DIR, "snapshots.db"))
+init_graph_store(store)
+init_drift_store(store)
+init_report_store(store)
+app.include_router(graph_router)
+app.include_router(drift_router)
+app.include_router(report_router)
 
 
 # ---------------------------------------------------------------------------
