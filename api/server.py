@@ -134,7 +134,7 @@ async def health():
     try:
         import psutil
         proc = psutil.Process()
-        system = {"memory_mb": round(proc.memory_info().rss / 1024 / 1024, 1), "cpu_percent": proc.cpu_percent(0.1)}
+        system = {"memory_mb": round(proc.memory_info().rss / 1024 / 1024, 1), "cpu_percent": proc.cpu_percent()}
     except (ImportError, Exception):
         pass
 
