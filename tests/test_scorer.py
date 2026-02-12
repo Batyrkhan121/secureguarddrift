@@ -1,7 +1,6 @@
 # tests/test_scorer.py
 # Test drift/scorer.py
 
-import pytest
 from drift.detector import DriftEvent
 from drift.scorer import score_event, score_all_events, _severity_label
 

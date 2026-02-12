@@ -1,7 +1,6 @@
 # tests/test_builder.py
 # Test graph/builder.py
 
-import pytest
 from datetime import datetime
 from graph.builder import p99, _infer_node_type, build_snapshot
 

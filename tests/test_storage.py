@@ -1,7 +1,6 @@
 # tests/test_storage.py
 # Test graph/storage.py
 
-import pytest
 from datetime import datetime
 from graph.models import Node, Edge, Snapshot
 from graph.storage import SnapshotStore
@@ -10,7 +9,7 @@ from graph.storage import SnapshotStore
 class TestSnapshotStore:
     def test_creates_tables_on_init(self, tmp_db_path):
         """Test SnapshotStore creates tables on initialization"""
-        store = SnapshotStore(db_path=tmp_db_path)
+        SnapshotStore(db_path=tmp_db_path)
         
         # Verify tables exist by querying them
         import sqlite3

@@ -1,7 +1,6 @@
 # tests/test_explainer.py
 # Test drift/explainer.py
 
-import pytest
 from drift.detector import DriftEvent
 from drift.explainer import explain_event, explain_all, _title, _what_changed, _recommendation
 
