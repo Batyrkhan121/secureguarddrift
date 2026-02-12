@@ -4,7 +4,6 @@
 from fastapi import APIRouter, HTTPException
 from integrations.config import settings
 from integrations.slack_notifier import SlackNotifier
-from integrations.jira_client import JiraClient
 from integrations.siem_exporter import SIEMExporter
 from drift.explainer import ExplainCard
 

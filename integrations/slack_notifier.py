@@ -3,7 +3,6 @@
 
 import time
 import requests
-from datetime import datetime
 from drift.explainer import ExplainCard
 
 
@@ -76,7 +75,7 @@ class SlackNotifier:
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"*Why risk:*\n" + "\n".join(f"• {r}" for r in card.why_risk),
+                    "text": "*Why risk:*\n" + "\n".join(f"• {r}" for r in card.why_risk),
                 },
             },
             {

@@ -57,11 +57,11 @@ class SIEMExporter:
         extensions.append(f"src={card.source or 'unknown'}")
         extensions.append(f"dst={card.destination or 'unknown'}")
         extensions.append(f"cs1={card.risk_score}")
-        extensions.append(f"cs1Label=RiskScore")
+        extensions.append("cs1Label=RiskScore")
         extensions.append(f"cs2={card.severity}")
-        extensions.append(f"cs2Label=Severity")
+        extensions.append("cs2Label=Severity")
         extensions.append(f"cs3={','.join(card.affected)}")
-        extensions.append(f"cs3Label=AffectedServices")
+        extensions.append("cs3Label=AffectedServices")
         extensions.append(f"msg={card.what_changed.replace('|', '_')}")
 
         extension = " ".join(extensions)
@@ -120,25 +120,17 @@ class SIEMExporter:
             return False
 
     def export_event(self, card: ExplainCard) -> bool:
-        """Экспортирует событие в SIEM.
-
-        Returns:
-            True если успешно отправлено
-        """
+        """Экспортирует событие в SIEM."""
         cef_message = self.format_cef(card)
 
         if self.transport == "syslog":
             return self.send_syslog(cef_message)
         elif self.transport == "webhook":
             return self.send_webhook(cef_message, card)
-        else:
-            print(f"Unknown transport: {self.transport}")
-            return False
+        return False
 
 
 if __name__ == "__main__":
-    from drift.explainer import ExplainCard
-
     card = ExplainCard(
         event_type="new_edge",
         title="Test Event",

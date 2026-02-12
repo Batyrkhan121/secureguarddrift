@@ -30,10 +30,10 @@ class JiraClient:
     def format_description(self, card: ExplainCard) -> str:
         """Форматирует description в Jira Markdown."""
         desc = f"h2. What Changed\n{card.what_changed}\n\n"
-        desc += f"h2. Why Risk\n" + "\n".join(f"* {r}" for r in card.why_risk) + "\n\n"
+        desc += "h2. Why Risk\n" + "\n".join(f"* {r}" for r in card.why_risk) + "\n\n"
         desc += f"h2. Affected Services\n{', '.join(card.affected)}\n\n"
         desc += f"h2. Recommendation\n{card.recommendation}\n\n"
-        desc += f"h2. Details\n"
+        desc += "h2. Details\n"
         desc += f"* Risk Score: {card.risk_score}\n"
         desc += f"* Severity: {card.severity}\n"
         desc += f"* Event Type: {card.event_type}\n"
