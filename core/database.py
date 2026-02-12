@@ -118,7 +118,7 @@ def register_backend(name: str, factory):
     _BACKEND_FACTORIES[name] = factory
 
 
-def get_backend(db_path: str, backend_type: str = "sqlite", **kwargs) -> SQLiteBackend:
+def get_backend(db_path: str, backend_type: str = "sqlite", **kwargs) -> DatabaseBackend:
     """Get a database backend instance.
 
     Args:

@@ -85,10 +85,8 @@ class TestInMemoryCache:
         """Can store None as a value (distinct from missing)."""
         cache = InMemoryCache()
         cache.set("none_val", None)
-        # get returns None for both missing and None value, but exists should differ
-        # Since get returns None, we check exists
-        # Note: exists uses get internally, so None values won't be distinguishable
-        # This is acceptable behavior for a cache
+        # None value is indistinguishable from missing via get() — this is expected
+        assert cache.get("none_val") is None
 
 
 class TestGetCache:

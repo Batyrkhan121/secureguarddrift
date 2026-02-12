@@ -1,5 +1,5 @@
 # graph/storage.py
-# Database хранилище для снапшотов (backend-agnostic)
+# Database storage for snapshots (backend-agnostic)
 
 from datetime import datetime
 
@@ -9,7 +9,7 @@ from core.database import get_backend
 
 
 class SnapshotStore:
-    """Database хранилище снапшотов графа.
+    """Database storage for graph snapshots.
 
     Supports pluggable database backends via core.database.
     Default: SQLite (backward-compatible).
