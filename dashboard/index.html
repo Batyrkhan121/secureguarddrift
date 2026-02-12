@@ -39,9 +39,30 @@ header button:hover{background:#1a4a8a}
 .card-body b{color:var(--text)}
 .card-body ul{margin:4px 0 4px 18px}
 .summary-bar{position:fixed;bottom:0;left:0;right:0;height:40px;background:#12122a;border-top:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;gap:18px;font-size:.82rem;font-family:monospace;z-index:100}
+  display:flex;align-items:center;justify-content:center;gap:18px;font-size:.82rem;font-family:monospace;z-index:100;flex-wrap:wrap}
 .summary-bar span{white-space:nowrap}
 .s-critical{color:var(--critical)}.s-high{color:var(--high)}.s-medium{color:var(--medium)}.s-low{color:var(--low)}
+.tab-btn{background:transparent;color:var(--muted);border:none;border-bottom:3px solid transparent;padding:8px 16px;
+  font-size:0.9rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+.tab-btn:hover{color:var(--text);background:rgba(255,255,255,0.05)}
+.tab-btn.active{color:var(--text);border-bottom-color:var(--high)}
+.policy-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;
+  border-left:4px solid var(--muted)}
+.policy-card.sev-critical{border-left-color:var(--critical)}
+.policy-card.sev-high{border-left-color:var(--high)}
+.policy-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.policy-title{font-size:0.85rem;font-weight:600;font-family:monospace}
+.policy-meta{display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-bottom:6px}
+.policy-status{padding:2px 8px;border-radius:10px;font-weight:600}
+.status-pending{background:#ffcc00;color:#000}
+.status-approved{background:#44aa44;color:#fff}
+.status-rejected{background:#ff4444;color:#fff}
+.policy-reason{font-size:0.8rem;color:var(--muted);margin-bottom:10px;line-height:1.4}
+.policy-actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn-small{background:#0f3460;color:var(--text);border:1px solid var(--border);border-radius:4px;
+  padding:4px 10px;font-size:0.75rem;cursor:pointer;transition:background 0.2s}
+.btn-small:hover{background:#1a4a8a}
+.btn-download{background:#1a4a8a}.btn-approve{background:#2a7a2a}.btn-reject{background:#7a2a2a}
 #popup{position:absolute;background:#2a2a4a;border:1px solid #4fc3f7;border-radius:8px;padding:12px;
   max-width:300px;font-size:13px;z-index:50;line-height:1.5;display:none;pointer-events:auto;cursor:default}
 #popup b{color:var(--text)}
@@ -53,24 +74,54 @@ header button:hover{background:#1a4a8a}
 <body class="notranslate">
 <header>
   <h1>SecureGuard Drift</h1>
+  <button id="btn-tab-drift" class="tab-btn active" onclick="switchTab('drift')">Drift Feed</button>
+  <button id="btn-tab-policies" class="tab-btn" onclick="switchTab('policies')">Policies</button>
+  <span class="spacer"></span>
   <select id="sel-base"><option value="">Baseline...</option></select>
   <select id="sel-curr"><option value="">Current...</option></select>
   <button id="btn-analyze">Analyze</button>
-  <span class="spacer"></span>
   <button id="btn-export">Export Report</button>
 </header>
 <div class="main">
   <div id="cy"><div id="popup"></div></div>
   <div class="sidebar">
-    <div class="sidebar-hdr">Drift Feed</div>
-    <div class="feed" id="feed"></div>
+    <div id="drift-panel" class="panel">
+      <div class="sidebar-hdr">Drift Feed</div>
+      <div class="feed" id="feed"></div>
+    </div>
+    <div id="policies-panel" class="panel" style="display:none">
+      <div class="sidebar-hdr">
+        NetworkPolicy Suggestions
+        <select id="sel-policy-status" onchange="refreshPolicies()" style="float:right;font-size:0.75rem;padding:2px 6px">
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="">All</option>
+        </select>
+      </div>
+      <div class="feed" id="policy-feed"></div>
+      <div style="padding:10px">
+        <button class="btn-small" onclick="downloadBundle()" style="width:100%">
+          Download All YAML
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 <div class="summary-bar" id="summary"></div>
 
 <script src="/static/interaction.js"></script>
+<script src="/static/policies.js"></script>
 <script>
 let cy,driftData=[],graphData={nodes:[],edges:[]};
+
+function switchTab(tab){
+  document.getElementById('btn-tab-drift').classList.toggle('active',tab==='drift');
+  document.getElementById('btn-tab-policies').classList.toggle('active',tab==='policies');
+  document.getElementById('drift-panel').style.display=tab==='drift'?'flex':'none';
+  document.getElementById('policies-panel').style.display=tab==='policies'?'flex':'none';
+  if(tab==='policies') refreshPolicies();
+}
 
 async function loadSnapshots(){
   let snaps;
@@ -192,7 +243,7 @@ document.getElementById('btn-export').onclick=()=>{window.location='/api/report/
 
 async function init(){
   initCy();await loadSnapshots();await loadGraph();await loadDrift();
-  initInteractions();
+  initInteractions();initPolicies();
 }
 init();
 </script>
