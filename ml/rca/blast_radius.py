@@ -48,8 +48,10 @@ class BlastRadiusPredictor:
                 edge_prob = prob * decay * (1 + error_rate)
                 edge_prob = min(edge_prob, 1.0)
 
-                req_per_min = max(request_count / 60, 0.1)
-                time_to_impact = round(max(1, (depth + 1) * (5 / req_per_min)), 1)
+                # Estimate time to impact: higher traffic = faster propagation
+                # request_count is total for snapshot period; use as relative weight
+                traffic_weight = max(request_count, 1)
+                time_to_impact = round(max(1, (depth + 1) * (500 / traffic_weight)), 1)
 
                 node_type = nodes.get(dst, {}).get("node_type", "service")
                 if node_type == "database":

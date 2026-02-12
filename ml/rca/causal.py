@@ -3,6 +3,9 @@
 from collections import deque
 
 
+_UNREACHABLE_DISTANCE = 10
+
+
 class CausalAnalyzer:
     """Identify root cause of error cascades using graph analysis."""
 
@@ -107,7 +110,7 @@ class CausalAnalyzer:
     def _min_distance(self, adj: dict, source: str, targets: set) -> int:
         """BFS shortest distance from source to any target."""
         if source in targets:
-            return 1
+            return 0
         visited = {source}
         queue = deque([(source, 0)])
         while queue:
@@ -118,7 +121,7 @@ class CausalAnalyzer:
                 if neighbor not in visited:
                     visited.add(neighbor)
                     queue.append((neighbor, dist + 1))
-        return 10
+        return _UNREACHABLE_DISTANCE
 
     def _find_downstream(self, adj: dict, source: str, affected: set) -> list[str]:
         """Find all affected downstream services via BFS."""
