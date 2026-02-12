@@ -1,0 +1,31 @@
+image:
+  repository: secureguard-drift
+  tag: latest
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+env:
+  SECUREGUARD_PORT: "8000"
+  SECUREGUARD_LOG_LEVEL: "info"
+  SECUREGUARD_DATA_DIR: "/app/data"
+
+ingress:
+  enabled: false
+  host: ""
+
+secrets:
+  jwtSecret: ""
