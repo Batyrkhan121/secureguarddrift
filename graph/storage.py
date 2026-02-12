@@ -199,9 +199,15 @@ class SnapshotStore:
             raise ValueError("tenant_id required for delete operations")
         with sqlite3.connect(self.db_path) as conn:
             # Удаляем edges
-            conn.execute("DELETE FROM edges WHERE snapshot_id = ?", (snapshot_id,))
+            conn.execute(
+                "DELETE FROM edges WHERE snapshot_id = ? AND tenant_id = ?",
+                (snapshot_id, tenant_id),
+            )
             # Удаляем nodes
-            conn.execute("DELETE FROM nodes WHERE snapshot_id = ?", (snapshot_id,))
+            conn.execute(
+                "DELETE FROM nodes WHERE snapshot_id = ? AND tenant_id = ?",
+                (snapshot_id, tenant_id),
+            )
             # Удаляем snapshot
             cursor = conn.execute(
                 "DELETE FROM snapshots WHERE snapshot_id = ? AND tenant_id = ?",
