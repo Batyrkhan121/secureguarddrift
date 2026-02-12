@@ -1,5 +1,9 @@
 """tests/test_smoke.py — Full MVP smoke test: pipeline → API → 14 assertions."""
-import csv, os, shutil, tempfile, unittest
+import csv
+import os
+import shutil
+import tempfile
+import unittest
 from datetime import datetime
 try:
     from scripts.generate_mock_data import generate_rows, CSV_HEADER
@@ -15,9 +19,12 @@ class TestSmoke(unittest.TestCase):
         if _HAS_GEN:
             rows = generate_rows(datetime(2026, 2, 10, 10, 0, 0), 3)
             with open(cp, "w", newline="", encoding="utf-8") as f:
-                w = csv.writer(f); w.writerow(CSV_HEADER); w.writerows(rows)
+                w = csv.writer(f)
+                w.writerow(CSV_HEADER)
+                w.writerows(rows)
         else:
-            import subprocess, sys
+            import subprocess
+            import sys
             subprocess.run([sys.executable, "-m", "scripts.generate_mock_data",
                             "--output", cp, "--hours", "3"], check=True)
         from collector.ingress_parser import parse_log_file, get_time_windows, filter_by_time_window
@@ -30,7 +37,8 @@ class TestSmoke(unittest.TestCase):
         import api.server as srv
         srv.store = store
         for fn in ("init_graph_store", "init_drift_store", "init_report_store"):
-            if hasattr(srv, fn): getattr(srv, fn)(store)
+            if hasattr(srv, fn):
+                getattr(srv, fn)(store)
         from fastapi.testclient import TestClient
         cls.C = TestClient(srv.app)
         cls.snaps = cls.C.get("/api/snapshots").json()

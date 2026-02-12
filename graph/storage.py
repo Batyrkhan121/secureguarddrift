@@ -177,13 +177,14 @@ class SnapshotStore:
 
 
 if __name__ == "__main__":
-    import sys, os
+    import sys
+    import os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
     store = SnapshotStore()
     snapshots = store.list_snapshots()
     print(f"SnapshotStore: {store.db_path}")
-    print(f"  Tables created: OK")
+    print("  Tables created: OK")
     print(f"  Snapshots in DB: {len(snapshots)}")
     for s in snapshots:
         print(f"    {s['snapshot_id'][:12]}... {s['timestamp_start']} → {s['timestamp_end']}")

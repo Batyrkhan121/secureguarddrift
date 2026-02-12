@@ -1,13 +1,12 @@
 # tests/test_drift_detector.py
 
-import pytest
 import sys
 import os
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from graph.models import Node, Edge, Snapshot
-from drift.detector import DriftDetector, DriftEvent
+from drift.detector import DriftDetector
 
 
 def make_snapshot(nodes, edges, snap_id="snap"):

@@ -1,5 +1,8 @@
 """scripts/run_demo.py — запуск SecureGuard Drift (Windows/Linux/macOS)."""
-import argparse, os, shutil, subprocess, sys
+import argparse
+import os
+import subprocess
+import sys
 try:
     import venv
 except ImportError:

@@ -89,7 +89,7 @@ def generate_report(
     # --- Футер ---
     lines += [
         "---",
-        f"*Отчёт сгенерирован SecureGuard Drift v0.1*  ",
+        "*Отчёт сгенерирован SecureGuard Drift v0.1*  ",
         f"*{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
         "",
     ]
@@ -108,7 +108,7 @@ def generate_report(
 
 if __name__ == "__main__":
     from graph.models import Node, Edge, Snapshot
-    from drift.detector import DriftEvent, detect_drift
+    from drift.detector import detect_drift
     from drift.scorer import score_all_events
     from drift.explainer import explain_all
 

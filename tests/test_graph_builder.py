@@ -1,6 +1,5 @@
 # tests/test_graph_builder.py
 
-import pytest
 import sys
 import os
 

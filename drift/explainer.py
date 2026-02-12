@@ -1,10 +1,9 @@
 # drift/explainer.py
 # Генерация человекочитаемых объяснений для drift-событий
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from drift.detector import DriftEvent
 from drift.rules import evaluate_rules
-from drift.scorer import score_event
 
 
 @dataclass
