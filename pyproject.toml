@@ -38,6 +38,10 @@ dev = [
     "httpx>=0.25.0",
     "ruff>=0.1.0",
 ]
+gnn = [
+    "torch>=2.1.0",
+    "torch_geometric>=2.4.0",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
