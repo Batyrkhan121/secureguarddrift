@@ -2,8 +2,12 @@
 # Модели: Node, Edge, Snapshot
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
 
 
 @dataclass(frozen=True)
@@ -39,8 +43,8 @@ class Edge:
 class Snapshot:
     """Снапшот графа за определённый временной интервал."""
     snapshot_id: str = field(default_factory=lambda: uuid4().hex)
-    timestamp_start: datetime = field(default_factory=datetime.utcnow)
-    timestamp_end: datetime = field(default_factory=datetime.utcnow)
+    timestamp_start: datetime = field(default_factory=_utcnow)
+    timestamp_end: datetime = field(default_factory=_utcnow)
     edges: list[Edge] = field(default_factory=list)
     nodes: list[Node] = field(default_factory=list)
 

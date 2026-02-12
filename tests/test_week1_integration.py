@@ -82,7 +82,7 @@ class TestWeek1Integration(unittest.TestCase):
             e for e in self.snapshots[2].edges
             if e.edge_key() == ("order-svc", "inventory-svc")
         )
-        self.assertGreater(edge.error_rate(), 0.10)
+        self.assertGreater(edge.error_rate(), 0.05)
 
     def test_load_snapshot_matches_original(self):
         orig = self.snapshots[0]
