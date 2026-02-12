@@ -3,7 +3,7 @@
 
 async function loadPolicies(status='pending'){
   try{
-    const resp=await fetch(`/api/policies?status=${status}`);
+    const resp=await fetch(`/api/policies?status=${encodeURIComponent(status)}`);
     const data=await resp.json();
     return data.policies||[];
   }catch(err){

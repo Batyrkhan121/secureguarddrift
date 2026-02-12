@@ -28,6 +28,8 @@ def deny_new_edge(source: str, destination: str, namespace: str = "default") -> 
     """
     policy_name = f"deny-{source}-to-{destination}".replace("_", "-")
 
+    # Note: This creates a "deny all ingress" policy for the destination
+    # To allow specific sources (excluding the problematic one), use deny_database_direct instead
     return {
         "apiVersion": "networking.k8s.io/v1",
         "kind": "NetworkPolicy",
@@ -44,17 +46,8 @@ def deny_new_edge(source: str, destination: str, namespace: str = "default") -> 
                 "matchLabels": {"app": destination},
             },
             "policyTypes": ["Ingress"],
-            "ingress": [
-                {
-                    "from": [
-                        {
-                            "podSelector": {
-                                "matchLabels": {"app": "!=" + source},
-                            }
-                        }
-                    ]
-                }
-            ],
+            # Empty ingress list means deny all - use deny_database_direct for whitelist approach
+            "ingress": [],
         },
     }
 
