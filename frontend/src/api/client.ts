@@ -37,7 +37,7 @@ export const getHealth = () =>
   api.get<HealthResponse>("/health").then((r) => r.data);
 
 export const getSnapshots = () =>
-  api.get<SnapshotSummary[]>("/graph/snapshots").then((r) => r.data);
+  api.get<SnapshotSummary[]>("/snapshots").then((r) => r.data);
 
 export const getGraphLatest = () =>
   api.get<Snapshot>("/graph/latest").then((r) => r.data);
@@ -54,31 +54,31 @@ export const getDriftSummary = () =>
   api.get<DriftSummary>("/drift/summary").then((r) => r.data);
 
 export const getPolicies = () =>
-  api.get<PolicySuggestion[]>("/policy/").then((r) => r.data);
+  api.get<PolicySuggestion[]>("/policies/").then((r) => r.data);
 
 export const approvePolicy = (id: string) =>
-  api.post(`/policy/${id}/approve`).then((r) => r.data);
+  api.post(`/policies/${id}/approve`).then((r) => r.data);
 
 export const rejectPolicy = (id: string) =>
-  api.post(`/policy/${id}/reject`).then((r) => r.data);
+  api.post(`/policies/${id}/reject`).then((r) => r.data);
 
 export const postFeedback = (eventId: string, verdict: string, comment?: string) =>
-  api.post("/ml/feedback", { event_id: eventId, verdict, comment }).then((r) => r.data);
+  api.post("/feedback", { event_id: eventId, verdict, comment }).then((r) => r.data);
 
 export const getFeedbackStats = () =>
-  api.get<FeedbackStats>("/ml/feedback/stats").then((r) => r.data);
+  api.get<FeedbackStats>("/feedback/stats/async").then((r) => r.data);
 
 export const getWhitelist = () =>
-  api.get<WhitelistEntry[]>("/ml/whitelist").then((r) => r.data);
+  api.get<WhitelistEntry[]>("/whitelist").then((r) => r.data);
 
 export const addWhitelist = (source: string, destination: string, reason: string) =>
-  api.post("/ml/whitelist", { source, destination, reason }).then((r) => r.data);
+  api.post("/whitelist", { source, destination, reason }).then((r) => r.data);
 
 export const removeWhitelist = (source: string, destination: string) =>
-  api.delete("/ml/whitelist", { data: { source, destination } }).then((r) => r.data);
+  api.delete(`/whitelist/${encodeURIComponent(source)}/${encodeURIComponent(destination)}`).then((r) => r.data);
 
 export const getBaseline = (source: string, destination: string) =>
-  api.get<Baseline>(`/ml/baseline/${source}/${destination}`).then((r) => r.data);
+  api.get<Baseline>(`/baseline/${source}/${destination}`).then((r) => r.data);
 
 export const login = (email: string, password: string) =>
   api.post<AuthResponse>("/auth/login", { email, password }).then((r) => r.data);
