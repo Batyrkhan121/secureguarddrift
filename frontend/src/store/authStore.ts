@@ -12,6 +12,7 @@ interface AuthState {
   setAuth: (token: string, user: User) => void;
 }
 
+/** Decode JWT payload for UI display only. All authorization is enforced server-side. */
 function decodeUser(token: string): User | null {
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
