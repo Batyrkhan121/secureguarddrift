@@ -6,6 +6,7 @@ import sqlite3
 from datetime import datetime
 
 from graph.models import Node, Edge, Snapshot
+from core.migrations import apply_migrations
 
 
 class SnapshotStore:
@@ -19,35 +20,8 @@ class SnapshotStore:
         self._init_db()
 
     def _init_db(self) -> None:
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS snapshots (
-                    snapshot_id    TEXT PRIMARY KEY,
-                    timestamp_start TEXT NOT NULL,
-                    timestamp_end   TEXT NOT NULL
-                )
-            """)
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS edges (
-                    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-                    snapshot_id     TEXT NOT NULL REFERENCES snapshots(snapshot_id),
-                    source          TEXT NOT NULL,
-                    destination     TEXT NOT NULL,
-                    request_count   INTEGER NOT NULL,
-                    error_count     INTEGER NOT NULL,
-                    avg_latency_ms  REAL NOT NULL,
-                    p99_latency_ms  REAL NOT NULL
-                )
-            """)
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS nodes (
-                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                    snapshot_id TEXT NOT NULL REFERENCES snapshots(snapshot_id),
-                    name        TEXT NOT NULL,
-                    namespace   TEXT NOT NULL,
-                    node_type   TEXT NOT NULL
-                )
-            """)
+        """Initialize database using migration system."""
+        apply_migrations(self.db_path)
 
     # ------------------------------------------------------------------
     def save_snapshot(self, snapshot: Snapshot) -> None:

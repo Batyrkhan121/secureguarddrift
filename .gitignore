@@ -84,3 +84,4 @@ reports/*.html
 tmp/
 temp/
 *.tmp
+*.db.*.bak
