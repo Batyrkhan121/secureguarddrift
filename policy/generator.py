@@ -3,7 +3,7 @@
 
 from dataclasses import dataclass
 from drift.explainer import ExplainCard
-from policy.templates import deny_new_edge, restrict_to_gateway, deny_database_direct
+from policy.templates import restrict_to_gateway, deny_database_direct
 
 
 @dataclass

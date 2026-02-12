@@ -42,7 +42,7 @@ def to_markdown(suggestion: PolicySuggestion) -> str:
         f"**Source:** {suggestion.source}",
         f"**Destination:** {suggestion.destination}",
         "",
-        f"**Reason:**",
+        "**Reason:**",
         suggestion.reason,
         "",
     ]
