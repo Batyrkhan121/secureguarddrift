@@ -18,7 +18,7 @@ def _make_snapshot(nodes, edges):
         "edges": [
             {
                 "source": s, "destination": d,
-                "request_count": rc, "error_rate": er, "error_count": int(rc * er),
+                "request_count": rc, "error_rate": er, "error_count": round(rc * er),
                 "avg_latency_ms": 50.0, "p99_latency_ms": 100.0,
             }
             for s, d, rc, er in edges

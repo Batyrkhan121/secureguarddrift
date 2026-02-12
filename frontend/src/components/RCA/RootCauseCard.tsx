@@ -6,9 +6,9 @@ interface RootCauseCardProps {
 }
 
 const CONFIDENCE_COLORS: Record<string, string> = {
-  high: "text-red-400",
+  high: "text-green-400",
   medium: "text-yellow-400",
-  low: "text-green-400",
+  low: "text-red-400",
 };
 
 function getConfidenceLevel(c: number): string {
