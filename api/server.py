@@ -10,10 +10,12 @@ from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from core.rate_limiter import RateLimitMiddleware
 from core.logging import setup_logging, RequestLoggingMiddleware
+from pydantic import BaseModel
+from auth.jwt_handler import jwt_handler
 
 from graph.storage import SnapshotStore
 from graph.builder import build_snapshot
@@ -169,6 +171,29 @@ async def health():
 @app.get("/api/snapshots")
 async def list_snapshots():
     return store.list_snapshots(tenant_id=None)
+
+
+# ---------------------------------------------------------------------------
+# Auth
+# ---------------------------------------------------------------------------
+DEMO_USERS = [
+    {"email": "admin@demo.com", "password": "admin123", "role": "admin", "tenant_id": "demo"},
+    {"email": "viewer@demo.com", "password": "viewer123", "role": "viewer", "tenant_id": "demo"},
+]
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+
+@app.post("/api/auth/login")
+async def login(body: LoginRequest):
+    user = next((u for u in DEMO_USERS if u["email"] == body.email and u["password"] == body.password), None)
+    if not user:
+        return JSONResponse(status_code=401, content={"detail": "Invalid credentials"})
+    token = jwt_handler.create_token(user_id=user["email"], email=user["email"], role=user["role"], tenant_id=user["tenant_id"])
+    return {"token": token, "user": {"email": user["email"], "role": user["role"]}}
 
 
 
