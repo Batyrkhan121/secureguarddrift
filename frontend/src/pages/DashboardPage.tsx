@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useSnapshots, useGraph, useDrift, useDriftSummary, usePolicies } from "@/api/hooks";
 import { postFeedback } from "@/api/client";
+import { useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Layout/Header";
 import SummaryBar from "@/components/Layout/SummaryBar";
 import ServiceGraph from "@/components/Graph/ServiceGraph";
@@ -26,10 +27,13 @@ export default function DashboardPage() {
 
   const nodes = graph?.nodes ?? [];
   const edges = graph?.edges ?? [];
+  const queryClient = useQueryClient();
 
   const handleAnalyze = useCallback(() => {
-    /* React Query auto-refetches when baselineId/currentId keys change */
-  }, []);
+    queryClient.invalidateQueries({ queryKey: ["graph"] });
+    queryClient.invalidateQueries({ queryKey: ["drift"] });
+    queryClient.invalidateQueries({ queryKey: ["driftSummary"] });
+  }, [queryClient]);
 
   const handleExport = useCallback(() => {
     const data = JSON.stringify({ graph, driftEvents }, null, 2);
@@ -43,7 +47,9 @@ export default function DashboardPage() {
   }, [graph, driftEvents]);
 
   const handleFeedback = useCallback((eventId: string, verdict: string) => {
-    postFeedback(eventId, verdict);
+    postFeedback(eventId, verdict).catch(() => {
+      /* Feedback submission failed — silently ignore for UX */
+    });
   }, []);
 
   const handleNodeClick = useCallback((name: string) => {

@@ -7,20 +7,31 @@ export default function SettingsPage() {
   const [source, setSource] = useState("");
   const [dest, setDest] = useState("");
   const [reason, setReason] = useState("");
+  const [error, setError] = useState("");
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
     if (!source || !dest) return;
-    await addWhitelist(source, dest, reason);
-    setSource("");
-    setDest("");
-    setReason("");
-    refetch();
+    setError("");
+    try {
+      await addWhitelist(source, dest, reason);
+      setSource("");
+      setDest("");
+      setReason("");
+      refetch();
+    } catch {
+      setError("Failed to add whitelist entry");
+    }
   }
 
   async function handleRemove(src: string, dst: string) {
-    await removeWhitelist(src, dst);
-    refetch();
+    setError("");
+    try {
+      await removeWhitelist(src, dst);
+      refetch();
+    } catch {
+      setError("Failed to remove whitelist entry");
+    }
   }
 
   return (
@@ -44,6 +55,7 @@ export default function SettingsPage() {
 
       <section>
         <h2 className="text-lg font-semibold mb-3">Whitelist</h2>
+        {error && <div className="text-critical text-sm mb-2">{error}</div>}
         <form onSubmit={handleAdd} className="flex gap-2 mb-4 max-w-3xl">
           <input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Source" className="bg-[#0f3460] text-gray-200 border border-[#0f3460] rounded px-3 py-1.5 text-sm flex-1" />
           <input value={dest} onChange={(e) => setDest(e.target.value)} placeholder="Destination" className="bg-[#0f3460] text-gray-200 border border-[#0f3460] rounded px-3 py-1.5 text-sm flex-1" />
