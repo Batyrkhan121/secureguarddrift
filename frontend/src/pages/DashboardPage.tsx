@@ -13,8 +13,9 @@ import GraphFilters, { type GraphFilterState } from "@/components/Graph/GraphFil
 import DiffView from "@/components/Graph/DiffView";
 import useKeyboard from "@/hooks/useKeyboard";
 import { notify } from "@/components/Toast";
+import RCAPanel from "@/components/RCA/RCAPanel";
 
-type Tab = "drift" | "policies";
+type Tab = "drift" | "policies" | "rca";
 type ViewMode = "normal" | "diff";
 
 export default function DashboardPage() {
@@ -163,6 +164,13 @@ export default function DashboardPage() {
             >
               Policies ({policies.length})
             </button>
+            <button
+              data-testid="tab-rca"
+              className={`flex-1 py-2 text-sm font-semibold ${activeTab === "rca" ? "bg-[#0f3460] text-white" : "text-gray-400 hover:text-gray-200"}`}
+              onClick={() => setActiveTab("rca")}
+            >
+              RCA
+            </button>
           </div>
           {activeTab === "drift" && <DriftFeed events={driftEvents} onFeedback={handleFeedback} />}
           {activeTab === "policies" && (
@@ -178,6 +186,9 @@ export default function DashboardPage() {
                 ))
               )}
             </div>
+          )}
+          {activeTab === "rca" && (
+            <RCAPanel snapshotId={currentId || undefined} nodes={allNodes} />
           )}
         </aside>
       </div>

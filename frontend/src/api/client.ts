@@ -2,11 +2,14 @@ import axios from "axios";
 import type {
   AuthResponse,
   Baseline,
+  BlastRadiusResponse,
   DriftEvent,
   DriftSummary,
   FeedbackStats,
   HealthResponse,
   PolicySuggestion,
+  PredictDriftResponse,
+  RootCauseResponse,
   Snapshot,
   SnapshotSummary,
   WhitelistEntry,
@@ -82,5 +85,14 @@ export const getBaseline = (source: string, destination: string) =>
 
 export const login = (email: string, password: string) =>
   api.post<AuthResponse>("/auth/login", { email, password }).then((r) => r.data);
+
+export const getRootCause = (snapshotId: string) =>
+  api.get<RootCauseResponse>("/rca/root-cause", { params: { snapshot_id: snapshotId } }).then((r) => r.data);
+
+export const getBlastRadius = (service: string, snapshotId: string) =>
+  api.get<BlastRadiusResponse>("/rca/blast-radius", { params: { service, snapshot_id: snapshotId } }).then((r) => r.data);
+
+export const predictDrift = (changes: { add_services?: string[]; remove_services?: string[]; add_edges?: Record<string, string>[]; modify_configs?: Record<string, string>[] }) =>
+  api.post<PredictDriftResponse>("/rca/predict-drift", changes).then((r) => r.data);
 
 export default api;

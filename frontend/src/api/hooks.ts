@@ -9,6 +9,8 @@ import {
   getPolicies,
   getWhitelist,
   getFeedbackStats,
+  getRootCause,
+  getBlastRadius,
 } from "./client";
 
 export function useHealth() {
@@ -72,5 +74,23 @@ export function useFeedbackStats() {
     queryKey: ["feedbackStats"],
     queryFn: getFeedbackStats,
     staleTime: 60_000,
+  });
+}
+
+export function useRootCause(snapshotId?: string) {
+  return useQuery({
+    queryKey: ["rootCause", snapshotId],
+    queryFn: () => getRootCause(snapshotId!),
+    enabled: !!snapshotId,
+    staleTime: 30_000,
+  });
+}
+
+export function useBlastRadius(service?: string, snapshotId?: string) {
+  return useQuery({
+    queryKey: ["blastRadius", service, snapshotId],
+    queryFn: () => getBlastRadius(service!, snapshotId!),
+    enabled: !!service && !!snapshotId,
+    staleTime: 300_000,
   });
 }

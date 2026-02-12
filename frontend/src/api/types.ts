@@ -139,3 +139,43 @@ export interface HealthResponse {
   version: string;
   redis?: string;
 }
+
+export interface RootCauseCandidate {
+  service: string;
+  confidence: number;
+  reason: string;
+  affected_downstream: string[];
+  evidence: string[];
+}
+
+export interface RootCauseResponse {
+  snapshot_id: string;
+  root_causes: RootCauseCandidate[];
+}
+
+export interface BlastRadiusAffected {
+  service: string;
+  probability: number;
+  time_to_impact_minutes: number;
+  impact: string;
+}
+
+export interface BlastRadiusResponse {
+  failing_service: string;
+  failure_mode: string;
+  affected: BlastRadiusAffected[];
+  total_blast_radius: number;
+  estimated_recovery_minutes: number;
+}
+
+export interface DriftPrediction {
+  predicted_event: string;
+  source: string;
+  destination: string;
+  predicted_severity: string;
+  recommendation: string;
+}
+
+export interface PredictDriftResponse {
+  predictions: DriftPrediction[];
+}
