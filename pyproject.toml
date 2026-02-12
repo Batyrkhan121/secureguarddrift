@@ -19,10 +19,11 @@ dependencies = [
     "watchdog>=3.0.0",
     "requests>=2.31.0",
     "pydantic-settings>=2.0.0",
+    "numpy>=1.24.0",
 ]
 
 [tool.setuptools.packages.find]
-include = ["api*", "collector*", "graph*", "drift*", "scripts*", "policy*", "gitops*", "integrations*"]
+include = ["api*", "collector*", "graph*", "drift*", "scripts*", "policy*", "gitops*", "integrations*", "ml*"]
 
 [project.optional-dependencies]
 dev = [
