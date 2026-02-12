@@ -36,7 +36,7 @@ def _count(key: str, now: float) -> int:
     ts = _buckets.get(key, [])
     cutoff = now - WINDOW_SECONDS
     # Remove expired entries from the front
-    while ts and ts[0] <= cutoff:
+    while ts and ts[0] < cutoff:
         ts.pop(0)
     return len(ts)
 
