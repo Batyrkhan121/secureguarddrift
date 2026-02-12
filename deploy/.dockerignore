@@ -2,7 +2,13 @@
 __pycache__
 *.pyc
 .git
+.github
 data/*.db
 reports/*
 tests/
+docs/
+e2e/
+*.md
 .env
+.gitignore
+.dockerignore
