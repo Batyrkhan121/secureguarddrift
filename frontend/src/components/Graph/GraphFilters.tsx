@@ -69,7 +69,7 @@ export default function GraphFilters({ onFilterChange }: GraphFiltersProps) {
       <div className="w-px h-5 bg-gray-600" />
       <div className="relative">
         <Search size={14} className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500" />
-        <input value={search} onChange={(e) => { setSearch(e.target.value); update(nodeTypes, severities, e.target.value); }}
+        <input id="graph-node-search" value={search} onChange={(e) => { setSearch(e.target.value); update(nodeTypes, severities, e.target.value); }}
           placeholder="Search node..." className="bg-gray-900 text-white text-xs rounded pl-7 pr-2 py-1 w-32 focus:outline-none focus:ring-1 focus:ring-blue-500" />
       </div>
       <button onClick={reset} className="text-gray-500 hover:text-white" title="Reset filters"><X size={14} /></button>

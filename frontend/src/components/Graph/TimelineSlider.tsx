@@ -12,6 +12,8 @@ interface TimelineSliderProps {
   onSelect: (index: number) => void;
 }
 
+const AUTOPLAY_INTERVAL_MS = 2000;
+
 export default function TimelineSlider({ snapshots, currentIndex, onSelect }: TimelineSliderProps) {
   const [playing, setPlaying] = useState(false);
 
@@ -22,7 +24,7 @@ export default function TimelineSlider({ snapshots, currentIndex, onSelect }: Ti
 
   useEffect(() => {
     if (!playing) return;
-    const timer = setInterval(next, 2000);
+    const timer = setInterval(next, AUTOPLAY_INTERVAL_MS);
     return () => clearInterval(timer);
   }, [playing, next]);
 

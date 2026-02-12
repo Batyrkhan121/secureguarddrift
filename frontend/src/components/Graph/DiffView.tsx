@@ -35,7 +35,11 @@ export default function DiffView({ baseline, current, onNodeClick }: DiffViewPro
   }
 
   for (const [key, e] of currEdges) {
-    const status = baseEdges.has(key) ? 'changed' : 'added';
+    const base = baseEdges.get(key);
+    const status = base
+      ? (e.request_count !== base.request_count || e.error_rate !== base.error_rate || e.avg_latency_ms !== base.avg_latency_ms ? 'changed' : 'unchanged')
+      : 'added';
+    if (status === 'unchanged') continue;
     elements.push({
       data: { id: `e-${key}`, source: e.source, target: e.destination, label: `${e.request_count}req` },
       classes: `edge-${status}`,

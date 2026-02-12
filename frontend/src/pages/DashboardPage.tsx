@@ -86,7 +86,7 @@ export default function DashboardPage() {
 
   useKeyboard({
     onEscape: () => { setSelectedNode(null); setSelectedEdge(null); setShowHelp(false); },
-    onSearch: () => document.querySelector<HTMLInputElement>('[placeholder="Search node..."]')?.focus(),
+    onSearch: () => document.getElementById("graph-node-search")?.focus(),
     onHelp: () => setShowHelp((v) => !v),
   });
 
