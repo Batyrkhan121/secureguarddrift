@@ -28,6 +28,8 @@ export default function DriftCard({ event, isOpen, onToggle, onFeedback, onHover
 
   return (
     <div
+      data-testid="drift-card"
+      data-severity={event.severity}
       className={`bg-[#16213e] border border-[#0f3460] rounded-lg px-3 py-2.5 cursor-pointer border-l-4 transition-colors hover:border-[#5588cc] ${severityColors[event.severity] ?? ""}`}
       onClick={onToggle}
       onMouseEnter={() => onHover?.(event.source, event.destination)}
@@ -45,7 +47,7 @@ export default function DriftCard({ event, isOpen, onToggle, onFeedback, onHover
         </div>
       </div>
       {isOpen && (
-        <div className="mt-2 text-xs leading-relaxed text-gray-400">
+        <div data-testid="drift-card-body" className="mt-2 text-xs leading-relaxed text-gray-400">
           <p><b className="text-gray-200">What changed:</b> {event.what_changed}</p>
           <p className="mt-1"><b className="text-gray-200">Why risk:</b></p>
           <ul className="list-disc ml-5 mt-0.5">
@@ -56,10 +58,13 @@ export default function DriftCard({ event, isOpen, onToggle, onFeedback, onHover
           {onFeedback && (
             <div className="flex gap-2 mt-2">
               <button onClick={(e) => { e.stopPropagation(); onFeedback(event.id, "true_positive"); }}
+                data-testid="feedback-agree"
                 className="bg-[#0f3460] border border-[#0f3460] rounded px-2 py-0.5 hover:bg-[#1a4a8a]">👍</button>
               <button onClick={(e) => { e.stopPropagation(); onFeedback(event.id, "false_positive"); }}
+                data-testid="feedback-disagree"
                 className="bg-[#0f3460] border border-[#0f3460] rounded px-2 py-0.5 hover:bg-[#1a4a8a]">👎</button>
               <button onClick={(e) => { e.stopPropagation(); onFeedback(event.id, "needs_review"); }}
+                data-testid="feedback-skip"
                 className="bg-[#0f3460] border border-[#0f3460] rounded px-2 py-0.5 hover:bg-[#1a4a8a]">⏭</button>
             </div>
           )}

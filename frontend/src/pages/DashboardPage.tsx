@@ -101,7 +101,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="flex flex-col h-screen bg-[#1a1a2e] text-gray-200">
+    <div data-testid="dashboard" className="flex flex-col h-screen bg-[#1a1a2e] text-gray-200">
       <Header
         snapshots={snapshots}
         baselineId={baselineId}
@@ -150,12 +150,14 @@ export default function DashboardPage() {
         <aside className="w-[340px] lg:w-[380px] border-l border-[#0f3460] overflow-y-auto pb-12">
           <div className="flex border-b border-[#0f3460]">
             <button
+              data-testid="tab-drift"
               className={`flex-1 py-2 text-sm font-semibold ${activeTab === "drift" ? "bg-[#0f3460] text-white" : "text-gray-400 hover:text-gray-200"}`}
               onClick={() => setActiveTab("drift")}
             >
               Drift Feed ({driftEvents.length})
             </button>
             <button
+              data-testid="tab-policies"
               className={`flex-1 py-2 text-sm font-semibold ${activeTab === "policies" ? "bg-[#0f3460] text-white" : "text-gray-400 hover:text-gray-200"}`}
               onClick={() => setActiveTab("policies")}
             >
@@ -164,7 +166,7 @@ export default function DashboardPage() {
           </div>
           {activeTab === "drift" && <DriftFeed events={driftEvents} onFeedback={handleFeedback} />}
           {activeTab === "policies" && (
-            <div className="p-2 text-sm text-gray-400">
+            <div data-testid="policies-tab" className="p-2 text-sm text-gray-400">
               {policies.length === 0 ? (
                 <div className="text-center py-10">No policies</div>
               ) : (

@@ -26,6 +26,7 @@ export default function Header({
       <select
         value={baselineId}
         onChange={(e) => onBaselineChange(e.target.value)}
+        data-testid="baseline-select"
         className="bg-[#0f3460] text-gray-200 border border-[#0f3460] rounded px-2 py-1 text-sm"
       >
         <option value="">Baseline...</option>
@@ -38,6 +39,7 @@ export default function Header({
       <select
         value={currentId}
         onChange={(e) => onCurrentChange(e.target.value)}
+        data-testid="current-select"
         className="bg-[#0f3460] text-gray-200 border border-[#0f3460] rounded px-2 py-1 text-sm"
       >
         <option value="">Current...</option>
@@ -47,17 +49,17 @@ export default function Header({
           </option>
         ))}
       </select>
-      <button onClick={onAnalyze} className="bg-[#0f3460] text-gray-200 border border-[#0f3460] rounded px-3 py-1 text-sm hover:bg-[#1a4a8a]">
+      <button onClick={onAnalyze} data-testid="analyze-btn" className="bg-[#0f3460] text-gray-200 border border-[#0f3460] rounded px-3 py-1 text-sm hover:bg-[#1a4a8a]">
         Analyze
       </button>
       {hasRole("operator") && (
-        <button onClick={onExport} className="bg-[#0f3460] text-gray-200 border border-[#0f3460] rounded px-3 py-1 text-sm hover:bg-[#1a4a8a]">
+        <button onClick={onExport} data-testid="export-btn" className="bg-[#0f3460] text-gray-200 border border-[#0f3460] rounded px-3 py-1 text-sm hover:bg-[#1a4a8a]">
           Export Report
         </button>
       )}
-      <span className="text-sm text-gray-400">{user?.email}</span>
+      <span data-testid="user-menu" className="text-sm text-gray-400">{user?.email}</span>
       <span className="text-xs text-gray-500">({user?.role})</span>
-      <button onClick={logout} className="bg-[#0f3460] text-gray-200 border border-[#0f3460] rounded px-3 py-1 text-sm hover:bg-[#1a4a8a]">
+      <button onClick={logout} data-testid="logout-btn" className="bg-[#0f3460] text-gray-200 border border-[#0f3460] rounded px-3 py-1 text-sm hover:bg-[#1a4a8a]">
         Logout
       </button>
     </header>

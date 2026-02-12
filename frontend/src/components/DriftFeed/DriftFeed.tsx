@@ -21,7 +21,7 @@ export default function DriftFeed({ events, onFeedback, onHoverEdge, onLeaveEdge
   }
 
   return (
-    <div className="flex flex-col gap-1.5 p-2">
+    <div data-testid="drift-feed" className="flex flex-col gap-1.5 p-2">
       {events.map((evt, i) => (
         <DriftCard
           key={evt.id}

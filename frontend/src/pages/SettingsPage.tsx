@@ -35,7 +35,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#1a1a2e] text-gray-200 p-8">
+    <div data-testid="settings-page" className="min-h-screen bg-[#1a1a2e] text-gray-200 p-8">
       <h1 className="text-2xl font-bold mb-6">Settings</h1>
 
       <section className="mb-8">
@@ -45,7 +45,7 @@ export default function SettingsPage() {
             <div key={name} className="bg-[#16213e] border border-[#0f3460] rounded-lg p-4">
               <div className="flex justify-between items-center">
                 <span className="font-semibold">{name}</span>
-                <button className="bg-[#0f3460] text-gray-200 rounded px-3 py-1 text-sm hover:bg-[#1a4a8a]">Test Connection</button>
+                <button data-testid={`${name.toLowerCase()}-test-btn`} className="bg-[#0f3460] text-gray-200 rounded px-3 py-1 text-sm hover:bg-[#1a4a8a]">Test Connection</button>
               </div>
               <p className="text-xs text-gray-500 mt-1">Configure in environment variables</p>
             </div>

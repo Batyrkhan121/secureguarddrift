@@ -109,12 +109,14 @@ export default function ServiceGraph({ nodes, edges, driftEvents, onNodeClick, o
   const elements = buildElements(nodes, edges, driftEvents);
 
   return (
-    <CytoscapeComponent
+    <div data-testid="service-graph" className="w-full h-full">
+      <CytoscapeComponent
       elements={elements}
       stylesheet={stylesheet}
       layout={{ name: "cose", animate: false, nodeDimensionsIncludeLabels: true, padding: 30 } as cytoscape.LayoutOptions}
       cy={handleCy}
       className="w-full h-full bg-[#16213e]"
-    />
+      />
+    </div>
   );
 }
