@@ -30,6 +30,13 @@ export default function EdgePopup({ edge, driftEvents, position, onClose }: Edge
     (e) => e.source === edge.source && e.destination === edge.destination,
   );
 
+  const badgeClass: Record<string, string> = {
+    critical: "bg-critical text-white",
+    high: "bg-high text-black",
+    medium: "bg-medium text-black",
+    low: "bg-low text-black",
+  };
+
   return (
     <div
       ref={ref}
@@ -46,7 +53,7 @@ export default function EdgePopup({ edge, driftEvents, position, onClose }: Edge
       {related.length > 0 && (
         <div className="mt-2 border-t border-gray-600 pt-2">
           {related.map((evt) => (
-            <span key={evt.id} className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full mr-1 mt-1 bg-${evt.severity} text-black`}>
+            <span key={evt.id} className={`inline-block text-xs font-bold px-2 py-0.5 rounded-full mr-1 mt-1 ${badgeClass[evt.severity] ?? ""}`}>
               {evt.severity}
             </span>
           ))}
