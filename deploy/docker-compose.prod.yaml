@@ -35,6 +35,29 @@ services:
       timeout: 3s
       retries: 5
 
+  worker:
+    build: {context: ../, dockerfile: deploy/Dockerfile}
+    command: celery -A worker.app worker --loglevel=info --concurrency=2
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    environment:
+      DATABASE_URL: postgresql+asyncpg://sg:${DB_PASSWORD}@postgres:5432/secureguard
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    restart: unless-stopped
+
+  beat:
+    build: {context: ../, dockerfile: deploy/Dockerfile}
+    command: celery -A worker.app beat --loglevel=info
+    depends_on:
+      redis: {condition: service_healthy}
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    restart: unless-stopped
+
 volumes:
   pg_data:
   redis_data:

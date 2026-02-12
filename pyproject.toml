@@ -26,10 +26,11 @@ dependencies = [
     "aiosqlite>=0.19.0",
     "alembic>=1.12.0",
     "redis[hiredis]>=5.0.0",
+    "celery[redis]>=5.3.0",
 ]
 
 [tool.setuptools.packages.find]
-include = ["api*", "collector*", "graph*", "drift*", "scripts*", "policy*", "gitops*", "integrations*", "ml*", "auth*", "core*", "db*", "cache*"]
+include = ["api*", "collector*", "graph*", "drift*", "scripts*", "policy*", "gitops*", "integrations*", "ml*", "auth*", "core*", "db*", "cache*", "worker*"]
 
 [project.optional-dependencies]
 dev = [
