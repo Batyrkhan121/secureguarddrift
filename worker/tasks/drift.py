@@ -54,6 +54,30 @@ def detect_drift_task(self, tenant_id: str, snapshot_id: str):
 
         logger.info("Drift detected: %d events for tenant=%s", len(events), tenant_id)
 
+        # Publish events to Redis for WebSocket broadcast
+        try:
+            import json as _json
+            from cache.redis_client import get_redis
+            redis = get_redis()
+            if redis is not None:
+                import asyncio
+                payload = _json.dumps({
+                    "type": "drift_detected",
+                    "tenant_id": tenant_id,
+                    "snapshot_id": snapshot_id,
+                    "event_count": len(events),
+                    "event_ids": event_ids,
+                })
+                loop = asyncio.new_event_loop()
+                try:
+                    loop.run_until_complete(
+                        redis.publish(f"drift_events:{tenant_id}", payload)
+                    )
+                finally:
+                    loop.close()
+        except Exception:
+            logger.debug("Redis publish skipped (unavailable)", exc_info=True)
+
         # Trigger notifications for high-severity events
         high_severity_ids = [
             eid for eid, (_, _, sev) in zip(event_ids, scored)

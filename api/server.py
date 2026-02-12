@@ -28,6 +28,7 @@ from api.routes.policy_routes import router as policy_router, init_store as init
 from api.routes.gitops_routes import router as gitops_router, init_stores as init_gitops_stores
 from api.routes.integration_routes import router as integration_router
 from api.routes.ml_routes import router as ml_router
+from api.websocket import router as ws_router
 from policy.storage import PolicyStore
 from gitops.storage import GitOpsPRStore
 
@@ -64,7 +65,16 @@ async def lifespan(app: FastAPI):
     # Connect Redis (graceful — None if unavailable)
     from cache.redis_client import connect_redis, close_redis
     await connect_redis()
+    # Start WebSocket pub/sub listener (graceful — skips if no Redis)
+    import asyncio
+    from api.websocket import redis_subscriber
+    sub_task = asyncio.create_task(redis_subscriber())
     yield
+    sub_task.cancel()
+    try:
+        await sub_task
+    except asyncio.CancelledError:
+        pass
     await close_redis()
 
 
@@ -98,6 +108,7 @@ app.include_router(policy_router)
 app.include_router(gitops_router)
 app.include_router(integration_router)
 app.include_router(ml_router)
+app.include_router(ws_router)
 
 
 # ---------------------------------------------------------------------------
