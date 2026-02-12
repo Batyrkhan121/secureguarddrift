@@ -113,7 +113,8 @@ class SnapshotRepository:
         result = await self.session.execute(stmt)
         return [
             {"id": str(s.id), "timestamp_start": s.timestamp_start.isoformat(),
-             "timestamp_end": s.timestamp_end.isoformat(), "created_at": s.created_at.isoformat() if s.created_at else None}
+             "timestamp_end": s.timestamp_end.isoformat(), "created_at": s.created_at.isoformat() if s.created_at else None,
+             "metadata_": s.metadata_}
             for s in result.scalars().all()
         ]
 
@@ -135,6 +136,7 @@ class SnapshotRepository:
             "timestamp_start": snap.timestamp_start.isoformat(),
             "timestamp_end": snap.timestamp_end.isoformat(),
             "created_at": snap.created_at.isoformat() if snap.created_at else None,
+            "metadata_": snap.metadata_,
             "nodes": [{"name": n.name, "namespace": n.namespace, "node_type": n.node_type} for n in snap.nodes],
             "edges": [
                 {"source": e.source, "destination": e.destination, "request_count": e.request_count,
