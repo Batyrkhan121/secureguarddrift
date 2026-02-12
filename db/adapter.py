@@ -97,7 +97,7 @@ class StorageAdapter:
             "nodes": [{"name": n.name, "namespace": n.namespace, "node_type": n.node_type} for n in snapshot.nodes],
             "edges": [
                 {"source": e.source, "destination": e.destination, "request_count": e.request_count,
-                 "error_count": e.error_count, "error_rate": e.error_count / e.request_count if e.request_count else 0.0,
+                 "error_count": e.error_count, "error_rate": e.error_rate(),
                  "avg_latency_ms": e.avg_latency_ms, "p99_latency_ms": e.p99_latency_ms}
                 for e in snapshot.edges
             ],

@@ -4,6 +4,7 @@
 import asyncio
 from datetime import datetime
 
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from db.adapter import StorageAdapter
@@ -158,7 +159,6 @@ class TestStorageAdapterValidation:
 
     def test_save_requires_tenant(self):
         adapter, tid, engine = _make_adapter()
-        import pytest
         snap = Snapshot(snapshot_id="x", nodes=[], edges=[])
         with pytest.raises(ValueError):
             adapter.save_snapshot(snap)  # no tenant_id → Ellipsis default
@@ -168,7 +168,6 @@ class TestStorageAdapterValidation:
 
     def test_list_requires_tenant(self):
         adapter, tid, engine = _make_adapter()
-        import pytest
         with pytest.raises(ValueError):
             adapter.list_snapshots()  # no tenant_id
         _run(engine.dispose())
