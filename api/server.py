@@ -4,7 +4,6 @@
 import os
 import csv
 import time
-import sqlite3
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -116,7 +115,7 @@ async def health():
     # DB check
     try:
         t0 = time.time()
-        with sqlite3.connect(store.db_path) as conn:
+        with store._backend.connection() as conn:
             conn.execute("SELECT 1")
         db_status = {"status": "ok", "latency_ms": round((time.time() - t0) * 1000, 1)}
     except Exception:
