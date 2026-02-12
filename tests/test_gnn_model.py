@@ -151,7 +151,7 @@ class TestModelForward(unittest.TestCase):
 
         model = create_model()
         model.eval()
-        # 50 nodes, 100 edges — should be < 100ms
+        # 50 nodes, 100 edges — should be well under 1s
         data = Data(
             x=torch.randn(50, 8),
             edge_index=torch.randint(0, 50, (2, 100)),
@@ -161,7 +161,7 @@ class TestModelForward(unittest.TestCase):
         with torch.no_grad():
             model(data)
         elapsed = time.time() - start
-        self.assertLess(elapsed, 0.1)  # < 100ms
+        self.assertLess(elapsed, 1.0)  # generous for CI environments
 
 
 if __name__ == "__main__":

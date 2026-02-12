@@ -41,13 +41,13 @@ class GNNPredictor:
                 torch.load(model_path, weights_only=True)
             )
             self._available = True
+            self.model.eval()
             logger.info("GNN model loaded from %s", model_path)
         else:
             logger.warning(
                 "Model file %s not found — predictions will be empty",
                 model_path,
             )
-        self.model.eval()
 
     @property
     def available(self) -> bool:

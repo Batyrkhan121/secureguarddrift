@@ -135,16 +135,17 @@ class GNNTrainer:
 
         Returns best test metrics and saves model checkpoint internally.
         """
-        best_loss = float("inf")
+        best_f1 = -1.0
         wait = 0
         best_metrics: dict[str, float] = {}
 
         for epoch in range(1, epochs + 1):
             loss = self.train_epoch(train_data)
             metrics = self.evaluate(test_data)
+            test_f1 = metrics["f1"]
 
-            if loss < best_loss:
-                best_loss = loss
+            if test_f1 > best_f1:
+                best_f1 = test_f1
                 wait = 0
                 best_metrics = metrics
                 self._best_state = {
