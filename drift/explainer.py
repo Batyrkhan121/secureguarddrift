@@ -17,6 +17,13 @@ class ExplainCard:
     recommendation: str
     risk_score: int
     severity: str
+    source: str = ""
+    destination: str = ""
+    rules_triggered: list[str] = None
+
+    def __post_init__(self):
+        if self.rules_triggered is None:
+            self.rules_triggered = []
 
 
 # ---------------------------------------------------------------------------
@@ -106,6 +113,8 @@ def explain_event(event: DriftEvent, score: int, severity: str) -> ExplainCard:
     if event.destination != "*":
         affected.append(event.destination)
 
+    rules_triggered = [r.rule_name for r in rules if r.triggered]
+
     return ExplainCard(
         event_type=event.event_type,
         title=_title(event),
@@ -115,6 +124,9 @@ def explain_event(event: DriftEvent, score: int, severity: str) -> ExplainCard:
         recommendation=_recommendation(event),
         risk_score=score,
         severity=severity,
+        source=event.source,
+        destination=event.destination,
+        rules_triggered=rules_triggered,
     )
 
 

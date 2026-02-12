@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [tool.setuptools.packages.find]
-include = ["api*", "collector*", "graph*", "drift*", "scripts*"]
+include = ["api*", "collector*", "graph*", "drift*", "scripts*", "policy*"]
 
 [project.optional-dependencies]
 dev = [
