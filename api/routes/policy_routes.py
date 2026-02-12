@@ -1,9 +1,14 @@
 # api/routes/policy_routes.py
 # API эндпоинты для NetworkPolicy предложений
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from policy.storage import PolicyStore
 from policy.renderer import to_yaml, to_yaml_bundle
+from db.base import get_db
+from db.repository import PolicyRepository
+from api.routes import get_tenant_id
 
 router = APIRouter(prefix="/api/policies", tags=["policies"])
 
@@ -45,6 +50,19 @@ async def list_policies(request: Request, status: str = None):
     }
 
 
+@router.get("/async")
+async def list_policies_async(
+    request: Request,
+    status: str = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — list policies via ORM repository."""
+    tenant_id = get_tenant_id(request)
+    repo = PolicyRepository(db)
+    policies = await repo.list_all(tenant_id or "default", status=status)
+    return {"policies": policies, "count": len(policies)}
+
+
 @router.get("/{policy_id}")
 async def get_policy(policy_id: str, request: Request):
     """Возвращает детали одной policy."""
@@ -83,6 +101,25 @@ async def download_policy_yaml(policy_id: str, request: Request):
 
     return Response(
         content=yaml_content,
+        media_type="application/x-yaml",
+        headers={"Content-Disposition": f'attachment; filename="{policy_id}.yaml"'},
+    )
+
+
+@router.get("/{policy_id}/yaml/async")
+async def download_policy_yaml_async(
+    policy_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — get policy YAML via ORM repository."""
+    tenant_id = get_tenant_id(request)
+    repo = PolicyRepository(db)
+    yaml_text = await repo.get_yaml(policy_id, tenant_id or "default")
+    if not yaml_text:
+        raise HTTPException(status_code=404, detail=f"Policy {policy_id} not found")
+    return Response(
+        content=yaml_text,
         media_type="application/x-yaml",
         headers={"Content-Disposition": f'attachment; filename="{policy_id}.yaml"'},
     )
@@ -133,6 +170,23 @@ async def approve_policy(policy_id: str, request: Request):
     return {"status": "approved", "policy_id": policy_id}
 
 
+@router.post("/{policy_id}/approve/async")
+async def approve_policy_async(
+    policy_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — approve policy via ORM repository."""
+    tenant_id = get_tenant_id(request)
+    user = getattr(request.state, "user", None)
+    user_id = (user or {}).get("user_id")
+    repo = PolicyRepository(db)
+    ok = await repo.approve(policy_id, user_id or "system", tenant_id or "default")
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"Policy {policy_id} not found")
+    return {"status": "approved", "policy_id": policy_id}
+
+
 @router.post("/{policy_id}/reject")
 async def reject_policy(policy_id: str, request: Request):
     """Помечает policy как отклоненную."""
@@ -142,4 +196,21 @@ async def reject_policy(policy_id: str, request: Request):
     if not success:
         raise HTTPException(status_code=404, detail=f"Policy {policy_id} not found")
 
+    return {"status": "rejected", "policy_id": policy_id}
+
+
+@router.post("/{policy_id}/reject/async")
+async def reject_policy_async(
+    policy_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — reject policy via ORM repository."""
+    tenant_id = get_tenant_id(request)
+    user = getattr(request.state, "user", None)
+    user_id = (user or {}).get("user_id")
+    repo = PolicyRepository(db)
+    ok = await repo.reject(policy_id, user_id or "system", tenant_id or "default")
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"Policy {policy_id} not found")
     return {"status": "rejected", "policy_id": policy_id}
