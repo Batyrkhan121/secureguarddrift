@@ -47,8 +47,9 @@ class TestRedisClient:
 class TestRedisRateLimiter:
     def test_allows_within_limit(self):
         async def _test():
+            key = f"test_rl_allow_{time.time()}"
             for i in range(5):
-                allowed, remaining, reset = await check_rate_async(f"test_rl_{time.time()}:{i}", 10)
+                allowed, remaining, reset = await check_rate_async(key, 10)
                 assert allowed is True
                 assert remaining >= 0
         _run(_test())
@@ -58,6 +59,7 @@ class TestRedisRateLimiter:
             key = f"test_rl_block_{time.time()}"
             for _ in range(3):
                 allowed, _, _ = await check_rate_async(key, 3)
+                assert allowed is True
             # 4th should be blocked
             allowed, remaining, _ = await check_rate_async(key, 3)
             assert allowed is False

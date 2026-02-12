@@ -32,18 +32,18 @@ async def check_rate_async(key: str, limit: int, now: float | None = None) -> tu
 
         pipe = redis.pipeline(transaction=True)
         pipe.zremrangebyscore(key, "-inf", window_start)
-        pipe.zcard(key)
         pipe.zadd(key, {str(now): now})
+        pipe.zcard(key)
         pipe.expire(key, WINDOW_SECONDS + 1)
         results = await pipe.execute()
 
-        count = results[1]  # ZCARD result (before ZADD)
-        if count >= limit:
-            # Over limit — remove the ZADD we just did
+        count = results[2]  # ZCARD result (after ZADD)
+        if count > limit:
+            # Over limit — remove the entry we just added
             await redis.zrem(key, str(now))
             return False, 0, reset
 
-        remaining = limit - count - 1
+        remaining = limit - count
         return True, remaining, reset
     except Exception:
         # Redis error — fall back to in-memory
