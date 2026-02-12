@@ -175,6 +175,25 @@ class SnapshotStore:
 
         return (previous, latest)
 
+    def delete_snapshot(self, snapshot_id: str) -> bool:
+        """Удаляет снапшот из базы данных.
+
+        Args:
+            snapshot_id: ID снапшота для удаления
+
+        Returns:
+            True если удален, False если не найден
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            # Удаляем edges
+            conn.execute("DELETE FROM edges WHERE snapshot_id = ?", (snapshot_id,))
+            # Удаляем nodes
+            conn.execute("DELETE FROM nodes WHERE snapshot_id = ?", (snapshot_id,))
+            # Удаляем snapshot
+            cursor = conn.execute("DELETE FROM snapshots WHERE snapshot_id = ?", (snapshot_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
 
 if __name__ == "__main__":
     import sys
