@@ -3,6 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 from api.server import app
+from auth.jwt_handler import jwt_handler
 
 
 @pytest.fixture
@@ -34,7 +35,6 @@ def test_login_invalid_credentials(client):
 def test_login_token_is_valid_jwt(client):
     r = client.post("/api/auth/login", json={"email": "admin@demo.com", "password": "admin123"})
     token = r.json()["token"]
-    from auth.jwt_handler import jwt_handler
     payload = jwt_handler.verify_token(token)
     assert payload["email"] == "admin@demo.com"
     assert payload["role"] == "admin"
