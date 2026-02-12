@@ -365,22 +365,15 @@ class WhitelistRepository:
 
     async def is_whitelisted(self, source: str, dest: str, tenant_id: str) -> bool:
         now = _utcnow()
-        stmt = select(func.count()).select_from(Whitelist).where(
+        stmt = select(Whitelist).where(
             Whitelist.tenant_id == uuid.UUID(str(tenant_id)),
             Whitelist.source == source, Whitelist.destination == dest,
         )
         result = await self.session.execute(stmt)
-        count = result.scalar()
-        if count == 0:
+        w = result.scalar_one_or_none()
+        if w is None:
             return False
-        # Check expiration
-        stmt2 = select(Whitelist).where(
-            Whitelist.tenant_id == uuid.UUID(str(tenant_id)),
-            Whitelist.source == source, Whitelist.destination == dest,
-        )
-        result2 = await self.session.execute(stmt2)
-        w = result2.scalar_one_or_none()
-        if w and w.expires_at and w.expires_at < now:
+        if w.expires_at and w.expires_at < now:
             return False
         return True
 
