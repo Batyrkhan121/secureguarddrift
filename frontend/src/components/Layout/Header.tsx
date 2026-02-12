@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/store/authStore";
+import ThemeToggle from "@/components/ThemeToggle";
 import type { SnapshotSummary } from "@/api/types";
 
 interface HeaderProps {
@@ -20,6 +21,7 @@ export default function Header({
   return (
     <header className="flex items-center gap-3 px-5 py-2.5 bg-[#16213e] border-b border-[#0f3460]">
       <h1 className="text-lg font-bold shrink-0">SecureGuard Drift</h1>
+      <ThemeToggle />
       <span className="flex-1" />
       <select
         value={baselineId}

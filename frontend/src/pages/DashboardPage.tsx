@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useSnapshots, useGraph, useDrift, useDriftSummary, usePolicies } from "@/api/hooks";
 import { postFeedback } from "@/api/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,8 +8,14 @@ import ServiceGraph from "@/components/Graph/ServiceGraph";
 import NodePopup from "@/components/Graph/NodePopup";
 import EdgePopup from "@/components/Graph/EdgePopup";
 import DriftFeed from "@/components/DriftFeed/DriftFeed";
+import TimelineSlider from "@/components/Graph/TimelineSlider";
+import GraphFilters, { type GraphFilterState } from "@/components/Graph/GraphFilters";
+import DiffView from "@/components/Graph/DiffView";
+import useKeyboard from "@/hooks/useKeyboard";
+import { notify } from "@/components/Toast";
 
 type Tab = "drift" | "policies";
+type ViewMode = "normal" | "diff";
 
 export default function DashboardPage() {
   const [baselineId, setBaselineId] = useState("");
@@ -18,16 +24,30 @@ export default function DashboardPage() {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [selectedEdge, setSelectedEdge] = useState<{ source: string; destination: string } | null>(null);
   const [popupPos, setPopupPos] = useState({ x: 300, y: 200 });
+  const [viewMode, setViewMode] = useState<ViewMode>("normal");
+  const [timelineIdx, setTimelineIdx] = useState(0);
+  const [filters, setFilters] = useState<GraphFilterState>({ nodeTypes: new Set(["service", "database", "gateway"]), severities: new Set(["critical", "high", "medium", "low"]), search: "" });
+  const [showHelp, setShowHelp] = useState(false);
 
   const { data: snapshots = [] } = useSnapshots();
   const { data: graph } = useGraph(currentId || undefined);
+  const baselineGraph = useGraph(baselineId || undefined).data;
   const { data: driftEvents = [] } = useDrift(baselineId || undefined, currentId || undefined);
   const { data: summary } = useDriftSummary();
   const { data: policies = [] } = usePolicies();
 
-  const nodes = graph?.nodes ?? [];
-  const edges = graph?.edges ?? [];
+  const allNodes = graph?.nodes ?? [];
+  const allEdges = graph?.edges ?? [];
   const queryClient = useQueryClient();
+
+  const filteredNodes = useMemo(() =>
+    allNodes.filter((n) => filters.nodeTypes.has(n.node_type) && (!filters.search || n.name.toLowerCase().includes(filters.search.toLowerCase()))),
+    [allNodes, filters],
+  );
+  const filteredEdges = useMemo(() =>
+    allEdges.filter((e) => filteredNodes.some((n) => n.name === e.source) && filteredNodes.some((n) => n.name === e.destination)),
+    [allEdges, filteredNodes],
+  );
 
   const handleAnalyze = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["graph"] });
@@ -47,9 +67,9 @@ export default function DashboardPage() {
   }, [graph, driftEvents]);
 
   const handleFeedback = useCallback((eventId: string, verdict: string) => {
-    postFeedback(eventId, verdict).catch(() => {
-      /* Feedback submission failed — silently ignore for UX */
-    });
+    postFeedback(eventId, verdict)
+      .then(() => notify.success("Feedback submitted"))
+      .catch(() => notify.error("Failed to submit feedback"));
   }, []);
 
   const handleNodeClick = useCallback((name: string) => {
@@ -64,19 +84,19 @@ export default function DashboardPage() {
     setPopupPos({ x: 300, y: 200 });
   }, []);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        setSelectedNode(null);
-        setSelectedEdge(null);
-      }
-    };
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, []);
+  useKeyboard({
+    onEscape: () => { setSelectedNode(null); setSelectedEdge(null); setShowHelp(false); },
+    onSearch: () => document.querySelector<HTMLInputElement>('[placeholder="Search node..."]')?.focus(),
+    onHelp: () => setShowHelp((v) => !v),
+  });
 
-  const selectedNodeData = nodes.find((n) => n.name === selectedNode);
-  const selectedEdgeData = edges.find(
+  const handleTimelineSelect = useCallback((idx: number) => {
+    setTimelineIdx(idx);
+    if (snapshots[idx]) setCurrentId(snapshots[idx].id);
+  }, [snapshots]);
+
+  const selectedNodeData = filteredNodes.find((n) => n.name === selectedNode);
+  const selectedEdgeData = filteredEdges.find(
     (e) => selectedEdge && e.source === selectedEdge.source && e.destination === selectedEdge.destination,
   );
 
@@ -92,19 +112,39 @@ export default function DashboardPage() {
         onExport={handleExport}
       />
       <div className="flex flex-1 overflow-hidden relative">
-        <div className="flex-1 relative">
-          <ServiceGraph
-            nodes={nodes}
-            edges={edges}
-            driftEvents={driftEvents}
-            onNodeClick={handleNodeClick}
-            onEdgeClick={handleEdgeClick}
-          />
-          {selectedNodeData && (
-            <NodePopup node={selectedNodeData} edges={edges} driftEvents={driftEvents} position={popupPos} onClose={() => setSelectedNode(null)} />
-          )}
-          {selectedEdgeData && (
-            <EdgePopup edge={selectedEdgeData} driftEvents={driftEvents} position={popupPos} onClose={() => setSelectedEdge(null)} />
+        <div className="flex-1 relative flex flex-col">
+          <div className="flex items-center gap-2 px-2 py-1.5 bg-[#16213e] border-b border-[#0f3460]">
+            <GraphFilters onFilterChange={setFilters} />
+            <button
+              onClick={() => setViewMode(viewMode === "normal" ? "diff" : "normal")}
+              className={`px-2 py-0.5 rounded text-xs ${viewMode === "diff" ? "bg-orange-600 text-white" : "bg-gray-700 text-gray-300"}`}
+            >
+              {viewMode === "diff" ? "Diff View" : "Normal View"}
+            </button>
+          </div>
+          <div className="flex-1 relative">
+            {viewMode === "normal" ? (
+              <ServiceGraph
+                nodes={filteredNodes}
+                edges={filteredEdges}
+                driftEvents={driftEvents}
+                onNodeClick={handleNodeClick}
+                onEdgeClick={handleEdgeClick}
+              />
+            ) : (
+              <DiffView baseline={baselineGraph ?? null} current={graph ?? null} onNodeClick={handleNodeClick} />
+            )}
+            {selectedNodeData && (
+              <NodePopup node={selectedNodeData} edges={filteredEdges} driftEvents={driftEvents} position={popupPos} onClose={() => setSelectedNode(null)} />
+            )}
+            {selectedEdgeData && (
+              <EdgePopup edge={selectedEdgeData} driftEvents={driftEvents} position={popupPos} onClose={() => setSelectedEdge(null)} />
+            )}
+          </div>
+          {snapshots.length > 1 && (
+            <div className="px-2 py-1.5 border-t border-[#0f3460]">
+              <TimelineSlider snapshots={snapshots} currentIndex={timelineIdx} onSelect={handleTimelineSelect} />
+            </div>
           )}
         </div>
         <aside className="w-[340px] lg:w-[380px] border-l border-[#0f3460] overflow-y-auto pb-12">
@@ -140,6 +180,19 @@ export default function DashboardPage() {
         </aside>
       </div>
       <SummaryBar summary={summary} policyCount={policies.length} />
+      {showHelp && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowHelp(false)}>
+          <div className="bg-[#16213e] border border-[#0f3460] rounded-lg p-6 text-sm" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold mb-3">Keyboard Shortcuts</h3>
+            <div className="grid grid-cols-2 gap-x-8 gap-y-1">
+              <span className="text-gray-400">Esc</span><span>Close popups</span>
+              <span className="text-gray-400">J / K</span><span>Navigate drift cards</span>
+              <span className="text-gray-400">/</span><span>Focus search</span>
+              <span className="text-gray-400">?</span><span>Show this help</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

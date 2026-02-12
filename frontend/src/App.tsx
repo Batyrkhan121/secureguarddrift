@@ -3,6 +3,7 @@ import LoginPage from "@/components/Auth/LoginPage";
 import ProtectedRoute from "@/components/Auth/ProtectedRoute";
 import DashboardPage from "@/pages/DashboardPage";
 import SettingsPage from "@/pages/SettingsPage";
+import { ToastProvider } from "@/components/Toast";
 
 function ErrorFallback() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
   try {
     return (
       <BrowserRouter>
+        <ToastProvider />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/settings" element={<ProtectedRoute requiredRole="operator"><SettingsPage /></ProtectedRoute>} />
