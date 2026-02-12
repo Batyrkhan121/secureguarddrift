@@ -1,7 +1,6 @@
 # tests/test_rules.py
 # Test drift/rules.py
 
-import pytest
 from drift.detector import DriftEvent
 from drift.rules import (
     rule_sensitive_target,
@@ -65,7 +64,7 @@ class TestRuleBypassGateway:
             source="payment-svc",
             destination="payments-db",  # source base (payment) == dest base (payments) - close enough
         )
-        result = rule_bypass_gateway(event)
+        rule_bypass_gateway(event)
         
         # Note: The rule checks if src_base != dst_base, payment != payments, so it may trigger
         # Let's check the actual implementation

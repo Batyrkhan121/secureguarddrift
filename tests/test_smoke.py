@@ -33,7 +33,7 @@ class TestSmoke(unittest.TestCase):
         recs = parse_log_file(cp)
         store = SnapshotStore(db)
         for s, e in get_time_windows(recs, window_hours=1):
-            store.save_snapshot(build_snapshot(filter_by_time_window(recs, s, e), s, e))
+            store.save_snapshot(build_snapshot(filter_by_time_window(recs, s, e), s, e), tenant_id="default")
         import api.server as srv
         srv.store = store
         for fn in ("init_graph_store", "init_drift_store", "init_report_store"):

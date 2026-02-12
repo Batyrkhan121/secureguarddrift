@@ -16,6 +16,7 @@ class SnapshotScheduler:
         storage,
         interval_hours: int = 1,
         max_snapshots: int = 168,  # 7 дней * 24 часа
+        tenant_id: str = "default",
     ):
         """
         Args:
@@ -23,11 +24,13 @@ class SnapshotScheduler:
             storage: экземпляр SnapshotStore для сохранения
             interval_hours: интервал создания снапшотов в часах
             max_snapshots: максимальное количество хранимых снапшотов
+            tenant_id: tenant identifier for multi-tenancy isolation
         """
         self.log_dir = log_dir
         self.storage = storage
         self.interval_hours = interval_hours
         self.max_snapshots = max_snapshots
+        self.tenant_id = tenant_id
         self.running = False
         self.thread = None
 
@@ -96,14 +99,14 @@ class SnapshotScheduler:
 
         # Строим и сохраняем снапшот
         snapshot = build_snapshot(window_records, start_time, end_time)
-        self.storage.save_snapshot(snapshot)
+        self.storage.save_snapshot(snapshot, tenant_id=self.tenant_id)
 
         print(f"✅ Snapshot created: {snapshot.snapshot_id[:12]}... "
               f"({len(snapshot.nodes)} nodes, {len(snapshot.edges)} edges)")
 
     def _cleanup_old_snapshots(self):
         """Удаляет старые снапшоты, оставляя только max_snapshots последних."""
-        snapshots = self.storage.list_snapshots()
+        snapshots = self.storage.list_snapshots(tenant_id=self.tenant_id)
 
         if len(snapshots) <= self.max_snapshots:
             return
@@ -116,7 +119,7 @@ class SnapshotScheduler:
         for i in range(to_delete):
             snapshot_id = snapshots_sorted[i]["snapshot_id"]
             try:
-                self.storage.delete_snapshot(snapshot_id)
+                self.storage.delete_snapshot(snapshot_id, tenant_id=self.tenant_id)
                 print(f"🗑️  Deleted old snapshot: {snapshot_id[:12]}...")
             except Exception as e:
                 print(f"⚠️  Failed to delete snapshot {snapshot_id}: {e}")
@@ -143,7 +146,7 @@ if __name__ == "__main__":
     # Создаем один снапшот вручную для теста
     scheduler._create_snapshot()
 
-    snapshots = store.list_snapshots()
+    snapshots = store.list_snapshots(tenant_id="default")
     if len(snapshots) > 0:
         print(f"✅ Scheduler test passed: {len(snapshots)} snapshot(s) created")
     else:

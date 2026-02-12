@@ -69,10 +69,25 @@ header button:hover{background:#1a4a8a}
 #popup .p-row{color:var(--muted);margin:2px 0}
 #popup .p-row.red{color:var(--critical)}
 #popup .p-link{color:var(--svc);cursor:pointer;text-decoration:underline;margin-top:4px;display:inline-block}
+#login-page{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:200}
+#login-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px;width:340px}
+#login-box h2{margin-bottom:18px;font-size:1.2rem;text-align:center}
+#login-box input{width:100%;padding:9px 10px;margin-bottom:10px;background:#0f3460;color:var(--text);border:1px solid var(--border);border-radius:4px;font-size:.9rem}
+#login-box button{width:100%;padding:9px;background:var(--border);color:var(--text);border:none;border-radius:4px;font-size:.95rem;cursor:pointer}
+#login-box button:hover{background:#1a4a8a}
+#login-err{color:var(--critical);font-size:.82rem;margin-bottom:8px;min-height:1.2em;text-align:center}
 </style>
 </head>
 <body class="notranslate">
-<header>
+<div id="login-page" style="display:none">
+  <div id="login-box"><h2>SecureGuard Drift</h2>
+    <input id="login-email" type="email" placeholder="Email">
+    <input id="login-pass" type="password" placeholder="Password">
+    <div id="login-err"></div>
+    <button onclick="doLogin()">Login</button>
+  </div>
+</div>
+<header id="app-header">
   <h1>SecureGuard Drift</h1>
   <button id="btn-tab-drift" class="tab-btn active" onclick="switchTab('drift')">Drift Feed</button>
   <button id="btn-tab-policies" class="tab-btn" onclick="switchTab('policies')">Policies</button>
@@ -80,7 +95,8 @@ header button:hover{background:#1a4a8a}
   <select id="sel-base"><option value="">Baseline...</option></select>
   <select id="sel-curr"><option value="">Current...</option></select>
   <button id="btn-analyze">Analyze</button>
-  <button id="btn-export">Export Report</button>
+  <button id="btn-export" class="role-hide">Export Report</button>
+  <button id="btn-logout" onclick="doLogout()">Logout</button>
 </header>
 <div class="main">
   <div id="cy"><div id="popup"></div></div>
@@ -115,6 +131,42 @@ header button:hover{background:#1a4a8a}
 <script>
 let cy,driftData=[],graphData={nodes:[],edges:[]};
 
+function getToken(){return sessionStorage.getItem('jwt')}
+function getRole(){return sessionStorage.getItem('role')||'viewer'}
+function authHeaders(){const t=getToken();return t?{Authorization:'Bearer '+t}:{}}
+async function authFetch(url,opts={}){
+  opts.headers=Object.assign(authHeaders(),opts.headers||{});
+  const r=await fetch(url,opts);
+  if(r.status===401){sessionStorage.clear();showLogin()}
+  return r;
+}
+function showLogin(){document.getElementById('login-page').style.display='flex';
+  document.getElementById('app-header').style.display='none';
+  document.querySelector('.main').style.display='none';
+  document.getElementById('summary').style.display='none'}
+function showApp(){document.getElementById('login-page').style.display='none';
+  document.getElementById('app-header').style.display='flex';
+  document.querySelector('.main').style.display='grid';
+  document.getElementById('summary').style.display='flex';applyRole()}
+function applyRole(){const r=getRole();
+  document.querySelectorAll('.role-hide').forEach(el=>{el.style.display=(r==='viewer')?'none':''});
+  document.querySelectorAll('.role-admin').forEach(el=>{el.style.display=(r==='admin')?'':'none'})}
+async function doLogin(){
+  const email=document.getElementById('login-email').value;
+  const pass=document.getElementById('login-pass').value;
+  const errEl=document.getElementById('login-err');errEl.textContent='';
+  try{const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({email,password:pass})});
+    if(!r.ok){errEl.textContent='Invalid email or password';return}
+    const d=await r.json();sessionStorage.setItem('jwt',d.token);sessionStorage.setItem('role',d.user.role);
+    showApp();init();
+  }catch(e){errEl.textContent='Connection error'}
+}
+function doLogout(){sessionStorage.clear();showLogin()}
+document.getElementById('login-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+
+if(!getToken()){showLogin()}else{showApp()}
+
 function switchTab(tab){
   document.getElementById('btn-tab-drift').classList.toggle('active',tab==='drift');
   document.getElementById('btn-tab-policies').classList.toggle('active',tab==='policies');
@@ -125,7 +177,7 @@ function switchTab(tab){
 
 async function loadSnapshots(){
   let snaps;
-  try{snaps=await(await fetch('/api/snapshots')).json()}
+  try{snaps=await(await authFetch('/api/snapshots')).json()}
   catch(err){console.error('Failed to load snapshots:',err);showError('Cannot connect to API server');return}
   const sb=document.getElementById('sel-base'),sc=document.getElementById('sel-curr');
   sb.innerHTML='<option value="">Baseline...</option>';
@@ -162,7 +214,7 @@ function initCy(){
 }
 
 async function loadGraph(){
-  try{graphData=await(await fetch('/api/graph/latest')).json()}
+  try{graphData=await(await authFetch('/api/graph/latest')).json()}
   catch(err){console.error('Failed to load graph:',err);showError('Failed to load service graph');return}
   const maxReq=Math.max(1,...graphData.edges.map(e=>e.request_count));
   const elems=[];
@@ -181,7 +233,7 @@ async function loadDrift(baseId,currId){
   let url='/api/drift/';
   if(baseId&&currId) url+=`?baseline_id=${baseId}&current_id=${currId}`;
   let data;
-  try{data=await(await fetch(url)).json()}
+  try{data=await(await authFetch(url)).json()}
   catch(err){console.error('Failed to load drift:',err);showError('Failed to load drift analysis');return}
   driftData=data.events||[];
   renderFeed();renderSummary();

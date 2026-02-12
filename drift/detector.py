@@ -62,12 +62,12 @@ def detect_drift(baseline: Snapshot, current: Snapshot) -> list[DriftEvent]:
 
         # 3. Error spike
         old_er, new_er = old.error_rate(), new.error_rate()
-        if old_er > 0 and new_er > 0.05 and new_er / old_er > 2:
+        if new_er > 0.05 and (old_er == 0 or new_er / old_er > 2):
             events.append(DriftEvent(
                 event_type="error_spike", source=key[0], destination=key[1],
                 details={"baseline_value": round(old_er, 4),
                          "current_value": round(new_er, 4),
-                         "change_factor": round(new_er / old_er, 2)},
+                         "change_factor": round(new_er / old_er, 2) if old_er > 0 else float("inf")},
             ))
 
         # 4. Latency spike

@@ -147,7 +147,7 @@ if __name__ == "__main__":
 
     profile = build_baseline(snapshots, ("svc-a", "svc-b"))
     if profile:
-        print(f"Baseline для ('svc-a', 'svc-b'):")
+        print("Baseline для ('svc-a', 'svc-b'):")
         print(f"  request_count: {profile.request_count_mean:.1f} ± {profile.request_count_std:.1f}")
         print(f"  error_rate: {profile.error_rate_mean:.3f} ± {profile.error_rate_std:.3f}")
         print(f"  p99_latency: {profile.p99_latency_mean:.1f} ± {profile.p99_latency_std:.1f}")

@@ -3,7 +3,6 @@
 
 import pytest
 from datetime import datetime
-from httpx import AsyncClient
 from fastapi.testclient import TestClient
 
 from api.server import app
@@ -17,10 +16,21 @@ from api.routes.report_routes import init_store as init_report_store
 @pytest.fixture
 def test_store(tmp_path):
     """Create a test SnapshotStore with sample data"""
+    import api.server as srv
+    import api.routes.graph_routes as gr
+    import api.routes.drift_routes as dr
+    import api.routes.report_routes as rr
+    # Save original stores so we can restore after the test
+    orig_server_store = srv.store
+    orig_graph = gr._store
+    orig_drift = dr._store
+    orig_report = rr._store
+
     db_path = str(tmp_path / "test_api.db")
     store = SnapshotStore(db_path=db_path)
     
     # Initialize the store for all routers
+    srv.store = store
     init_graph_store(store)
     init_drift_store(store)
     init_report_store(store)
@@ -63,10 +73,16 @@ def test_store(tmp_path):
         ],
     )
     
-    store.save_snapshot(baseline)
-    store.save_snapshot(current)
+    store.save_snapshot(baseline, tenant_id="default")
+    store.save_snapshot(current, tenant_id="default")
     
-    return store
+    yield store
+
+    # Restore original stores so other tests are not affected
+    srv.store = orig_server_store
+    gr._store = orig_graph
+    dr._store = orig_drift
+    rr._store = orig_report
 
 
 @pytest.fixture
@@ -253,7 +269,7 @@ class TestDriftEndpointWithNoData:
             nodes=[Node(name="a")],
             edges=[],
         )
-        store.save_snapshot(snap)
+        store.save_snapshot(snap, tenant_id="default")
         
         client = TestClient(app)
         

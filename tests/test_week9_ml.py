@@ -2,17 +2,17 @@
 """Тесты для Week 9: ML/Intelligence."""
 
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 import pytest
 
 from drift.detector import DriftEvent
 from graph.models import Edge, Snapshot
-from ml.anomaly import calculate_anomaly_score, calculate_z_scores, is_anomaly
+from ml.anomaly import is_anomaly
 from ml.baseline import EdgeProfile, build_baseline, update_baseline
 from ml.feedback import FeedbackRecord, FeedbackStore, calculate_feedback_modifier
-from ml.patterns import detect_deployment_pattern, detect_canary_pattern, recognize_pattern
-from ml.smart_scorer import calculate_smart_score, score_all_events_smart
+from ml.patterns import detect_deployment_pattern, detect_canary_pattern
+from ml.smart_scorer import calculate_smart_score
 from ml.whitelist import WhitelistEntry, WhitelistStore
 
 

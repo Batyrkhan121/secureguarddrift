@@ -14,6 +14,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
     # Публичные эндпоинты без auth
     PUBLIC_PATHS = [
         "/api/health",
+        "/api/auth/login",
         "/",
         "/static",
         "/docs",

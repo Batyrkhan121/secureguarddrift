@@ -4,7 +4,7 @@
 import pytest
 from datetime import datetime
 from graph.models import Node, Edge, Snapshot
-from drift.detector import detect_drift, DriftEvent
+from drift.detector import detect_drift
 
 
 class TestDetectDrift:

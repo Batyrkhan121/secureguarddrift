@@ -1,9 +1,10 @@
 # api/routes/graph_routes.py
 # Роутер для эндпоинтов графа
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from graph.models import Snapshot
 from graph.storage import SnapshotStore
+from api.routes import get_tenant_id
 
 router = APIRouter(prefix="/api/graph", tags=["graph"])
 
@@ -35,26 +36,28 @@ def _snapshot_to_dict(snap: Snapshot) -> dict:
     }
 
 
-def _snap_or_404(sid: str, store: SnapshotStore) -> Snapshot:
-    snap = store.load_snapshot(sid)
+def _snap_or_404(sid: str, store: SnapshotStore, tenant_id: str) -> Snapshot:
+    snap = store.load_snapshot(sid, tenant_id=tenant_id)
     if snap is None:
         raise HTTPException(status_code=404, detail={"error": "Snapshot not found"})
     return snap
 
 
 @router.get("/latest")
-async def graph_latest(store: SnapshotStore = Depends(get_store)):
-    pair = store.get_latest_two()
+async def graph_latest(request: Request, store: SnapshotStore = Depends(get_store)):
+    tenant_id = get_tenant_id(request)
+    pair = store.get_latest_two(tenant_id=tenant_id)
     if pair is None:
-        snaps = store.list_snapshots()
+        snaps = store.list_snapshots(tenant_id=tenant_id)
         if not snaps:
             raise HTTPException(status_code=404, detail={"error": "Snapshot not found"})
-        snap = store.load_snapshot(snaps[-1]["snapshot_id"])
+        snap = store.load_snapshot(snaps[-1]["snapshot_id"], tenant_id=tenant_id)
     else:
         snap = pair[1]
     return _snapshot_to_dict(snap)
 
 
 @router.get("/{snapshot_id}")
-async def graph_by_id(snapshot_id: str, store: SnapshotStore = Depends(get_store)):
-    return _snapshot_to_dict(_snap_or_404(snapshot_id, store))
+async def graph_by_id(snapshot_id: str, request: Request, store: SnapshotStore = Depends(get_store)):
+    tenant_id = get_tenant_id(request)
+    return _snapshot_to_dict(_snap_or_404(snapshot_id, store, tenant_id))

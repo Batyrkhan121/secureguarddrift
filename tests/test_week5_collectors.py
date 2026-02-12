@@ -180,12 +180,12 @@ class TestScheduler(unittest.TestCase):
             # Создаем снапшот вручную (имитация работы scheduler)
             scheduler._create_snapshot()
 
-            snapshots = store.list_snapshots()
+            snapshots = store.list_snapshots(tenant_id="default")
             self.assertGreater(len(snapshots), 0, "Scheduler should create at least one snapshot")
 
             # Проверяем, что снапшот содержит данные
             snapshot_id = snapshots[0]["snapshot_id"]
-            snapshot = store.load_snapshot(snapshot_id)
+            snapshot = store.load_snapshot(snapshot_id, tenant_id="default")
             self.assertIsNotNone(snapshot)
             self.assertGreater(len(snapshot.edges), 0)
 
