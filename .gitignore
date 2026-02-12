@@ -85,3 +85,7 @@ tmp/
 temp/
 *.tmp
 *.db.*.bak
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
