@@ -3,8 +3,10 @@
 
 import os
 import csv
+import time
+import sqlite3
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -53,6 +55,7 @@ def _bootstrap() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    app.state.start_time = time.time()
     _bootstrap()
     yield
 
@@ -98,7 +101,66 @@ async def root():
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "snapshots_count": len(store.list_snapshots(tenant_id=None))}
+    now = time.time()
+    uptime = now - getattr(app.state, "start_time", now)
+    snapshots = store.list_snapshots(tenant_id=None)
+    snap_count = len(snapshots)
+
+    # DB check
+    try:
+        t0 = time.time()
+        with sqlite3.connect(store.db_path) as conn:
+            conn.execute("SELECT 1")
+        db_status = {"status": "ok", "latency_ms": round((time.time() - t0) * 1000, 1)}
+    except Exception:
+        db_status = {"status": "error", "latency_ms": -1}
+
+    # last snapshot age
+    last_age = None
+    if snapshots:
+        last_ts = snapshots[-1].get("timestamp_end")
+        if last_ts:
+            last_age = int(now - datetime.fromisoformat(last_ts).replace(tzinfo=timezone.utc).timestamp())
+
+    # DB size
+    db_size = None
+    try:
+        db_size = os.path.getsize(store.db_path)
+    except OSError:
+        pass
+
+    # system info (psutil optional)
+    system = None
+    try:
+        import psutil
+        proc = psutil.Process()
+        system = {"memory_mb": round(proc.memory_info().rss / 1024 / 1024, 1), "cpu_percent": proc.cpu_percent(0.1)}
+    except (ImportError, Exception):
+        pass
+
+    # overall status
+    comp_statuses = [db_status["status"]]
+    if db_status["status"] == "error":
+        overall = "error"
+    elif "degraded" in comp_statuses:
+        overall = "degraded"
+    else:
+        overall = "ok"
+
+    return {
+        "status": overall,
+        "version": app.version,
+        "uptime_seconds": round(uptime, 1),
+        "snapshots_count": snap_count,
+        "last_snapshot_age_seconds": last_age,
+        "db_size_bytes": db_size,
+        "components": {
+            "database": db_status,
+            "collector": {"status": "ok", "last_run": None},
+            "scheduler": {"status": "ok", "next_run": None},
+        },
+        "system": system,
+    }
 
 
 @app.get("/api/snapshots")
