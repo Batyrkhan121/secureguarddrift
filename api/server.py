@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from core.rate_limiter import RateLimitMiddleware
 from core.logging import setup_logging, RequestLoggingMiddleware
+from core.security_headers import SecurityHeadersMiddleware
 from pydantic import BaseModel
 from auth.jwt_handler import jwt_handler
 
@@ -74,6 +75,7 @@ app.add_middleware(
 )
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(RequestLoggingMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Static files
 app.mount("/static", StaticFiles(directory=DASHBOARD_DIR), name="static")
