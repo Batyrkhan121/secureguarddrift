@@ -61,7 +61,11 @@ async def lifespan(app: FastAPI):
     setup_logging()
     app.state.start_time = time.time()
     _bootstrap()
+    # Connect Redis (graceful — None if unavailable)
+    from cache.redis_client import connect_redis, close_redis
+    await connect_redis()
     yield
+    await close_redis()
 
 
 app = FastAPI(title="SecureGuardDrift API", version="0.1.0", lifespan=lifespan)
@@ -144,6 +148,15 @@ async def health():
     except (ImportError, Exception):
         pass
 
+    # Redis check
+    redis_status = {"status": "not_configured"}
+    try:
+        from cache.redis_client import ping as redis_ping
+        redis_ok = await redis_ping()
+        redis_status = {"status": "ok" if redis_ok else "unavailable"}
+    except Exception:
+        redis_status = {"status": "unavailable"}
+
     # overall status
     comp_statuses = [db_status["status"]]
     if db_status["status"] == "error":
@@ -162,6 +175,7 @@ async def health():
         "db_size_bytes": db_size,
         "components": {
             "database": db_status,
+            "redis": redis_status,
             "collector": {"status": "ok", "last_run": None},
             "scheduler": {"status": "ok", "next_run": None},
         },

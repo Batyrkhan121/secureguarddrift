@@ -25,10 +25,11 @@ dependencies = [
     "sqlalchemy>=2.0.0",
     "aiosqlite>=0.19.0",
     "alembic>=1.12.0",
+    "redis[hiredis]>=5.0.0",
 ]
 
 [tool.setuptools.packages.find]
-include = ["api*", "collector*", "graph*", "drift*", "scripts*", "policy*", "gitops*", "integrations*", "ml*", "auth*", "core*", "db*"]
+include = ["api*", "collector*", "graph*", "drift*", "scripts*", "policy*", "gitops*", "integrations*", "ml*", "auth*", "core*", "db*", "cache*"]
 
 [project.optional-dependencies]
 dev = [
