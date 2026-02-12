@@ -17,10 +17,12 @@ dependencies = [
     "pyyaml>=6.0",
     "python-dotenv>=1.0.0",
     "watchdog>=3.0.0",
+    "requests>=2.31.0",
+    "pydantic-settings>=2.0.0",
 ]
 
 [tool.setuptools.packages.find]
-include = ["api*", "collector*", "graph*", "drift*", "scripts*", "policy*"]
+include = ["api*", "collector*", "graph*", "drift*", "scripts*", "policy*", "gitops*"]
 
 [project.optional-dependencies]
 dev = [

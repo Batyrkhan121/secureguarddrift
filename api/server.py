@@ -19,7 +19,9 @@ from api.routes.graph_routes import router as graph_router, init_store as init_g
 from api.routes.drift_routes import router as drift_router, init_store as init_drift_store
 from api.routes.report_routes import router as report_router, init_store as init_report_store
 from api.routes.policy_routes import router as policy_router, init_store as init_policy_store
+from api.routes.gitops_routes import router as gitops_router, init_stores as init_gitops_stores
 from policy.storage import PolicyStore
+from gitops.storage import GitOpsPRStore
 
 # ---------------------------------------------------------------------------
 DASHBOARD_DIR = os.path.join(os.path.dirname(__file__), "..", "dashboard")
@@ -66,14 +68,17 @@ app.mount("/static", StaticFiles(directory=DASHBOARD_DIR), name="static")
 
 store = SnapshotStore(os.path.join(DATA_DIR, "snapshots.db"))
 policy_store = PolicyStore(os.path.join(DATA_DIR, "policies.db"))
+pr_store = GitOpsPRStore(os.path.join(DATA_DIR, "gitops_prs.db"))
 init_graph_store(store)
 init_drift_store(store)
 init_report_store(store)
 init_policy_store(policy_store)
+init_gitops_stores(policy_store, pr_store)
 app.include_router(graph_router)
 app.include_router(drift_router)
 app.include_router(report_router)
 app.include_router(policy_router)
+app.include_router(gitops_router)
 
 
 # ---------------------------------------------------------------------------
