@@ -126,7 +126,7 @@ def _migrate_table(
                          "updated_at", "service_pattern", "user", "event_id", "status_old",
                          "timestamp", "created_by_name"}
             for col in list(data.keys()):
-                if col in skip_cols and table not in ("drift_events",):
+                if col in skip_cols and table != "drift_events":
                     data.pop(col, None)
 
             if not dry_run:
