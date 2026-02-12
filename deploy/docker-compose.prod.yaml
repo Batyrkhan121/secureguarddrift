@@ -1,0 +1,40 @@
+services:
+  app:
+    build: {context: ../, dockerfile: deploy/Dockerfile}
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    environment:
+      DATABASE_URL: postgresql+asyncpg://sg:${DB_PASSWORD}@postgres:5432/secureguard
+      REDIS_URL: redis://redis:6379/0
+      SECUREGUARD_ENV: production
+      JWT_SECRET: ${JWT_SECRET}
+    ports: ["8000:8000"]
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    volumes: [pg_data:/var/lib/postgresql/data]
+    environment:
+      POSTGRES_DB: secureguard
+      POSTGRES_USER: sg
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sg -d secureguard"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes: [redis_data:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pg_data:
+  redis_data:
