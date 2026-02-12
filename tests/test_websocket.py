@@ -141,6 +141,12 @@ class TestRedisPublish(unittest.TestCase):
         from worker.tasks.drift import detect_drift_task
         self.assertTrue(callable(detect_drift_task))
 
+        # Verify the task code imports redis publish machinery
+        import inspect
+        source = inspect.getsource(detect_drift_task)
+        self.assertIn("redis.publish", source)
+        self.assertIn("drift_events:", source)
+
     def test_redis_subscriber_no_redis(self):
         """redis_subscriber gracefully exits when Redis is unavailable."""
         from api.websocket import redis_subscriber

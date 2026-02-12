@@ -92,6 +92,8 @@ async def redis_subscriber():
         async for message in pubsub.listen():
             if message["type"] == "pmessage":
                 channel = message["channel"]
+                if isinstance(channel, bytes):
+                    channel = channel.decode()
                 tenant_id = channel.split(":", 1)[1] if ":" in channel else "default"
                 try:
                     data = json.loads(message["data"])

@@ -1,6 +1,8 @@
 # worker/tasks/drift.py
 # Background task: detect drift → score → explain → save → notify
 
+import asyncio
+import json
 import logging
 
 from worker.app import celery_app
@@ -56,12 +58,10 @@ def detect_drift_task(self, tenant_id: str, snapshot_id: str):
 
         # Publish events to Redis for WebSocket broadcast
         try:
-            import json as _json
             from cache.redis_client import get_redis
             redis = get_redis()
             if redis is not None:
-                import asyncio
-                payload = _json.dumps({
+                payload = json.dumps({
                     "type": "drift_detected",
                     "tenant_id": tenant_id,
                     "snapshot_id": snapshot_id,
