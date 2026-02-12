@@ -3,7 +3,7 @@
 
 import os
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class GitOpsPRStore:
@@ -65,7 +65,7 @@ class GitOpsPRStore:
                     pr_number,
                     pr_url,
                     provider,
-                    datetime.utcnow().isoformat(),
+                    datetime.now(timezone.utc).isoformat(),
                 ),
             )
             conn.commit()
@@ -135,7 +135,7 @@ class GitOpsPRStore:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 "UPDATE pull_requests SET status = ?, updated_at = ? WHERE pr_id = ?",
-                (status, datetime.utcnow().isoformat(), pr_id),
+                (status, datetime.now(timezone.utc).isoformat(), pr_id),
             )
             conn.commit()
             return cursor.rowcount > 0

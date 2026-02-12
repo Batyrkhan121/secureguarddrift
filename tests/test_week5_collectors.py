@@ -5,7 +5,7 @@ import os
 import json
 import tempfile
 import unittest
-from datetime import datetime
+from datetime import datetime, timezone
 from collector.nginx_parser import parse_nginx_log_line, parse_nginx_log_file
 from collector.envoy_parser import parse_envoy_log_line, parse_envoy_log_file
 from collector.auto_detect import detect_log_format
@@ -171,7 +171,7 @@ class TestScheduler(unittest.TestCase):
         test_log = os.path.join(test_dir, "test.csv")
         with open(test_log, "w") as f:
             f.write("timestamp,source_service,destination_service,http_method,path,status_code,latency_ms\n")
-            f.write(f"{datetime.utcnow().isoformat()}Z,api,user-svc,GET,/api,200,45.0\n")
+            f.write(f"{datetime.now(timezone.utc).isoformat()}Z,api,user-svc,GET,/api,200,45.0\n")
 
         try:
             store = SnapshotStore(test_db)

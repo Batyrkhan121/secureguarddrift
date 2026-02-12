@@ -4,7 +4,7 @@
 import os
 import time
 import threading
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 
 class SnapshotScheduler:
@@ -84,7 +84,7 @@ class SnapshotScheduler:
             return
 
         # Определяем временное окно (последний час)
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(hours=self.interval_hours)
 
         # Фильтруем записи по времени

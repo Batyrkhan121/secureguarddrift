@@ -4,7 +4,7 @@
 import os
 import sqlite3
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from policy.generator import PolicySuggestion
 
 
@@ -62,7 +62,7 @@ class PolicyStore:
                     suggestion.source,
                     suggestion.destination,
                     1 if suggestion.auto_apply_safe else 0,
-                    datetime.utcnow().isoformat(),
+                    datetime.now(timezone.utc).isoformat(),
                 ),
             )
 
@@ -140,7 +140,7 @@ class PolicyStore:
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute(
                 "UPDATE policies SET status = ?, updated_at = ? WHERE policy_id = ?",
-                (status, datetime.utcnow().isoformat(), policy_id),
+                (status, datetime.now(timezone.utc).isoformat(), policy_id),
             )
             conn.commit()
             return cursor.rowcount > 0
