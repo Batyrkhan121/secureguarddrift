@@ -24,7 +24,7 @@ class JSONFormatter(logging.Formatter):
         ctx = request_ctx.get()
         msg = _SECRET_RE.sub(r"\1\2***", record.getMessage())
         obj = {
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.") + f"{record.created % 1:.3f}"[2:] + "Z",
+            "timestamp": datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(timespec="milliseconds"),
             "level": record.levelname,
             "message": msg,
             "logger": record.name,
