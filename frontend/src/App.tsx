@@ -1,27 +1,34 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from "@/store/authStore";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from "@/components/Auth/LoginPage";
+import ProtectedRoute from "@/components/Auth/ProtectedRoute";
+import DashboardPage from "@/pages/DashboardPage";
+import SettingsPage from "@/pages/SettingsPage";
 
-function Dashboard() {
+function ErrorFallback() {
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold">SecureGuard Drift</h1>
-      <p className="text-gray-400 mt-2">Dashboard coming soon...</p>
+    <div className="fixed inset-0 bg-[#1a1a2e] flex items-center justify-center text-gray-400">
+      <div className="text-center">
+        <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
+        <button onClick={() => window.location.reload()} className="bg-[#0f3460] rounded px-4 py-2 text-sm hover:bg-[#1a4a8a]">
+          Reload
+        </button>
+      </div>
     </div>
   );
 }
 
 export default function App() {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/*"
-          element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />}
-        />
-      </Routes>
-    </BrowserRouter>
-  );
+  try {
+    return (
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/settings" element={<ProtectedRoute requiredRole="operator"><SettingsPage /></ProtectedRoute>} />
+          <Route path="/*" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+        </Routes>
+      </BrowserRouter>
+    );
+  } catch {
+    return <ErrorFallback />;
+  }
 }

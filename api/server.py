@@ -34,6 +34,7 @@ from gitops.storage import GitOpsPRStore
 
 # ---------------------------------------------------------------------------
 DASHBOARD_DIR = os.path.join(os.path.dirname(__file__), "..", "dashboard")
+FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 
 # ---------------------------------------------------------------------------
@@ -92,6 +93,9 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # Static files
 app.mount("/static", StaticFiles(directory=DASHBOARD_DIR), name="static")
+# Serve React frontend build in production (if available)
+if os.path.isdir(FRONTEND_DIST):
+    app.mount("/app", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
 
 store = SnapshotStore(os.path.join(DATA_DIR, "snapshots.db"))
 policy_store = PolicyStore(os.path.join(DATA_DIR, "policies.db"))
