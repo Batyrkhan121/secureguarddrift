@@ -203,6 +203,27 @@ def migration_v8(conn: sqlite3.Connection) -> None:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_audit_tenant ON audit_log(tenant_id)")
 
 
+def migration_v9(conn: sqlite3.Connection) -> None:
+    """v9: Add db_backend_meta table for dual-write migration tracking."""
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS db_backend_meta (
+            key         TEXT PRIMARY KEY,
+            value       TEXT NOT NULL,
+            updated_at  TEXT NOT NULL
+        )
+    """)
+    # Record that this database was initialized with SQLite
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "INSERT OR REPLACE INTO db_backend_meta (key, value, updated_at) VALUES (?, ?, ?)",
+        ("backend", "sqlite", now),
+    )
+    conn.execute(
+        "INSERT OR REPLACE INTO db_backend_meta (key, value, updated_at) VALUES (?, ?, ?)",
+        ("migration_strategy", "dual_write_pending", now),
+    )
+
+
 # Migration registry: (version, description, function)
 MIGRATIONS: list[tuple[int, str, Callable]] = [
     (1, "Base schema", migration_v1),
@@ -213,6 +234,7 @@ MIGRATIONS: list[tuple[int, str, Callable]] = [
     (6, "Add policies table", migration_v6),
     (7, "Add baselines table", migration_v7),
     (8, "Add audit_log table", migration_v8),
+    (9, "Add db_backend_meta table", migration_v9),
 ]
 
 

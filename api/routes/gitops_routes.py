@@ -1,11 +1,15 @@
 # api/routes/gitops_routes.py
 # API endpoints для GitOps PR Bot
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from gitops.config import settings
 from gitops.storage import GitOpsPRStore
 from gitops.pr_bot import GitOpsPRBot
 from policy.storage import PolicyStore
+from db.base import get_db
+from db.repository import PolicyRepository
 
 router = APIRouter(prefix="/api/gitops", tags=["gitops"])
 
@@ -117,3 +121,13 @@ async def sync_pr_statuses():
     updated = bot.sync_pr_statuses()
 
     return {"status": "completed", "updated": updated, "count": len(updated)}
+
+
+@router.get("/policies/async")
+async def list_approved_policies_async(
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — list approved policies ready for GitOps sync."""
+    repo = PolicyRepository(db)
+    policies = await repo.list_all("default", status="approved")
+    return {"policies": policies, "count": len(policies)}

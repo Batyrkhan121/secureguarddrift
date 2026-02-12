@@ -6,12 +6,16 @@ import tempfile
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from graph.models import Snapshot
 from graph.storage import SnapshotStore
 from drift.detector import detect_drift
 from drift.scorer import score_all_events
 from drift.explainer import explain_all
 from drift.report import generate_report
+from db.base import get_db
+from db.repository import SnapshotRepository
 from api.routes import get_tenant_id
 
 router = APIRouter(prefix="/api/report", tags=["report"])
@@ -85,3 +89,14 @@ async def report_json(
                     "affected": cd.affected, "recommendation": cd.recommendation,
                     "risk_score": cd.risk_score, "severity": cd.severity} for cd in cards],
     }
+
+
+@router.get("/snapshots/async")
+async def report_snapshots_async(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — list snapshots via ORM repository."""
+    tenant_id = get_tenant_id(request)
+    repo = SnapshotRepository(db)
+    return await repo.list_all(tenant_id or "default")

@@ -4,13 +4,16 @@
 from datetime import datetime, timezone
 from typing import Literal, Optional
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from graph.storage import SnapshotStore
 from ml.baseline import build_baseline
 from ml.feedback import FeedbackRecord, FeedbackStore
 from ml.whitelist import WhitelistEntry, WhitelistStore
+from db.base import get_db
+from db.repository import BaselineRepository, FeedbackRepository, WhitelistRepository
 from api.routes import get_tenant_id
 
 router = APIRouter(prefix="/api", tags=["ml"])
@@ -79,6 +82,29 @@ async def submit_feedback(req: FeedbackRequest, request: Request):
     return {"feedback_id": feedback_id, "status": "saved", "auto_whitelisted": req.verdict == "expected"}
 
 
+@router.post("/feedback/async")
+async def submit_feedback_async(
+    req: FeedbackRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — save feedback via ORM repository."""
+    tenant_id = get_tenant_id(request)
+    user = getattr(request.state, "user", None)
+    user_id = (user or {}).get("user_id")
+    repo = FeedbackRepository(db)
+    fb_id = await repo.save(
+        req.event_id, req.verdict, user_id, tenant_id or "default", comment=req.comment,
+    )
+    # Auto-whitelist on expected verdict
+    if req.verdict == "expected":
+        wl = WhitelistRepository(db)
+        await wl.add(req.source, req.destination,
+                     f"Auto-whitelisted from feedback: {req.comment or 'expected behavior'}",
+                     user_id, tenant_id or "default")
+    return {"feedback_id": fb_id, "status": "saved", "auto_whitelisted": req.verdict == "expected"}
+
+
 @router.get("/whitelist")
 async def get_whitelist(request: Request):
     """Возвращает список всех whitelisted edges."""
@@ -97,6 +123,18 @@ async def get_whitelist(request: Request):
             for e in entries
         ],
     }
+
+
+@router.get("/whitelist/async")
+async def get_whitelist_async(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — list whitelist via ORM repository."""
+    tenant_id = get_tenant_id(request)
+    repo = WhitelistRepository(db)
+    entries = await repo.list_all(tenant_id or "default")
+    return {"count": len(entries), "entries": entries}
 
 
 @router.post("/whitelist")
@@ -151,3 +189,30 @@ async def get_baseline(source: str, destination: str, request: Request):
         "sample_count": baseline.sample_count,
         "last_updated": baseline.last_updated.isoformat() if baseline.last_updated else None,
     }
+
+
+@router.get("/baseline/{source}/{destination}/async")
+async def get_baseline_async(
+    source: str,
+    destination: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — get baseline via ORM repository."""
+    tenant_id = get_tenant_id(request)
+    repo = BaselineRepository(db)
+    baseline = await repo.get(source, destination, tenant_id or "default")
+    if not baseline:
+        raise HTTPException(status_code=404, detail="No baseline found for this edge")
+    return baseline
+
+
+@router.get("/feedback/stats/async")
+async def feedback_stats_async(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — feedback stats via ORM repository."""
+    tenant_id = get_tenant_id(request)
+    repo = FeedbackRepository(db)
+    return await repo.get_stats(tenant_id or "default")

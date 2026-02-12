@@ -3,11 +3,15 @@
 
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from graph.models import Snapshot
 from graph.storage import SnapshotStore
 from drift.detector import detect_drift
 from drift.scorer import score_all_events
 from drift.explainer import explain_all
+from db.base import get_db
+from db.repository import DriftEventRepository
 from api.routes import get_tenant_id
 
 router = APIRouter(prefix="/api/drift", tags=["drift"])
@@ -82,6 +86,17 @@ async def drift_summary(
     return counts
 
 
+@router.get("/summary/async")
+async def drift_summary_async(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — drift event summary from ORM repository."""
+    tenant_id = get_tenant_id(request)
+    repo = DriftEventRepository(db)
+    return await repo.get_summary(tenant_id or "default")
+
+
 @router.get("/")
 async def drift_analysis(
     request: Request,
@@ -92,3 +107,20 @@ async def drift_analysis(
     tenant_id = get_tenant_id(request)
     baseline, current = _resolve_pair(store, baseline_id, current_id, tenant_id)
     return _run_drift(baseline, current)
+
+
+@router.get("/events/async")
+async def drift_events_async(
+    request: Request,
+    severity: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    limit: int = Query(100, le=500),
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint — drift events from ORM repository."""
+    tenant_id = get_tenant_id(request)
+    repo = DriftEventRepository(db)
+    events = await repo.get_events(
+        tenant_id or "default", severity=severity, status=status, limit=limit,
+    )
+    return {"events": events, "events_count": len(events)}

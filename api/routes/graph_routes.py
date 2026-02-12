@@ -2,8 +2,12 @@
 # Роутер для эндпоинтов графа
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from graph.models import Snapshot
 from graph.storage import SnapshotStore
+from db.base import get_db
+from db.repository import SnapshotRepository
 from api.routes import get_tenant_id
 
 router = APIRouter(prefix="/api/graph", tags=["graph"])
@@ -57,7 +61,36 @@ async def graph_latest(request: Request, store: SnapshotStore = Depends(get_stor
     return _snapshot_to_dict(snap)
 
 
+@router.get("/latest/async")
+async def graph_latest_async(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint using ORM repository (new path)."""
+    tenant_id = get_tenant_id(request)
+    repo = SnapshotRepository(db)
+    snapshot = await repo.get_latest(tenant_id=tenant_id or "default")
+    if not snapshot:
+        raise HTTPException(status_code=404, detail={"error": "No snapshots found"})
+    return snapshot
+
+
 @router.get("/{snapshot_id}")
 async def graph_by_id(snapshot_id: str, request: Request, store: SnapshotStore = Depends(get_store)):
     tenant_id = get_tenant_id(request)
     return _snapshot_to_dict(_snap_or_404(snapshot_id, store, tenant_id))
+
+
+@router.get("/{snapshot_id}/async")
+async def graph_by_id_async(
+    snapshot_id: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Async endpoint using ORM repository (new path)."""
+    tenant_id = get_tenant_id(request)
+    repo = SnapshotRepository(db)
+    snapshot = await repo.get(snapshot_id, tenant_id=tenant_id or "default")
+    if not snapshot:
+        raise HTTPException(status_code=404, detail={"error": "Snapshot not found"})
+    return snapshot

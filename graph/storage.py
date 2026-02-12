@@ -1,22 +1,23 @@
 # graph/storage.py
-# SQLite хранилище для снапшотов
+# Database storage for snapshots (backend-agnostic)
 
-import os
-import sqlite3
 from datetime import datetime
 
 from graph.models import Node, Edge, Snapshot
 from core.migrations import apply_migrations
+from core.database import get_backend
 
 
 class SnapshotStore:
-    """SQLite хранилище снапшотов графа."""
+    """Database storage for graph snapshots.
 
-    def __init__(self, db_path: str = "data/snapshots.db"):
+    Supports pluggable database backends via core.database.
+    Default: SQLite (backward-compatible).
+    """
+
+    def __init__(self, db_path: str = "data/snapshots.db", backend=None):
         self.db_path = db_path
-        db_dir = os.path.dirname(db_path)
-        if db_dir:
-            os.makedirs(db_dir, exist_ok=True)
+        self._backend = backend or get_backend(db_path, backend_type="sqlite")
         self._init_db()
 
     def _init_db(self) -> None:
@@ -35,7 +36,7 @@ class SnapshotStore:
         self._require_tenant(tenant_id)
         if tenant_id is None:
             raise ValueError("tenant_id required for save operations")
-        with sqlite3.connect(self.db_path) as conn:
+        with self._backend.connection() as conn:
             conn.execute(
                 "INSERT OR REPLACE INTO snapshots (snapshot_id, timestamp_start, timestamp_end, tenant_id) "
                 "VALUES (?, ?, ?, ?)",
@@ -80,7 +81,7 @@ class SnapshotStore:
     def load_snapshot(self, snapshot_id: str, *, tenant_id=...) -> Snapshot | None:
         """Загружает снапшот по ID. Возвращает None если не найден."""
         self._require_tenant(tenant_id)
-        with sqlite3.connect(self.db_path) as conn:
+        with self._backend.connection() as conn:
             if tenant_id is None:
                 row = conn.execute(
                     "SELECT snapshot_id, timestamp_start, timestamp_end "
@@ -132,7 +133,7 @@ class SnapshotStore:
     def list_snapshots(self, *, tenant_id=...) -> list[dict]:
         """Возвращает список снапшотов [{snapshot_id, timestamp_start, timestamp_end}]."""
         self._require_tenant(tenant_id)
-        with sqlite3.connect(self.db_path) as conn:
+        with self._backend.connection() as conn:
             if tenant_id is None:
                 rows = conn.execute(
                     "SELECT snapshot_id, timestamp_start, timestamp_end "
@@ -160,7 +161,7 @@ class SnapshotStore:
         Возвращает None если в БД меньше двух снапшотов.
         """
         self._require_tenant(tenant_id)
-        with sqlite3.connect(self.db_path) as conn:
+        with self._backend.connection() as conn:
             if tenant_id is None:
                 rows = conn.execute(
                     "SELECT snapshot_id FROM snapshots "
@@ -197,7 +198,7 @@ class SnapshotStore:
         self._require_tenant(tenant_id)
         if tenant_id is None:
             raise ValueError("tenant_id required for delete operations")
-        with sqlite3.connect(self.db_path) as conn:
+        with self._backend.connection() as conn:
             # Удаляем edges
             conn.execute(
                 "DELETE FROM edges WHERE snapshot_id = ? AND tenant_id = ?",

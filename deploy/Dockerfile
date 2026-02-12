@@ -3,11 +3,13 @@ FROM python:3.11-slim AS builder
 WORKDIR /app
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-COPY pyproject.toml .
+COPY pyproject.toml alembic.ini .
 COPY api/ api/
 COPY auth/ auth/
+COPY cache/ cache/
 COPY collector/ collector/
 COPY core/ core/
+COPY db/ db/
 COPY drift/ drift/
 COPY gitops/ gitops/
 COPY graph/ graph/

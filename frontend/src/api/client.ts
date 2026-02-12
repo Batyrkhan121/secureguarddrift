@@ -1,0 +1,98 @@
+import axios from "axios";
+import type {
+  AuthResponse,
+  Baseline,
+  BlastRadiusResponse,
+  DriftEvent,
+  DriftSummary,
+  FeedbackStats,
+  HealthResponse,
+  PolicySuggestion,
+  PredictDriftResponse,
+  RootCauseResponse,
+  Snapshot,
+  SnapshotSummary,
+  WhitelistEntry,
+} from "./types";
+
+const api = axios.create({ baseURL: "/api" });
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("sg_token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem("sg_token");
+      window.location.href = "/login";
+    }
+    return Promise.reject(err);
+  },
+);
+
+export const getHealth = () =>
+  api.get<HealthResponse>("/health").then((r) => r.data);
+
+export const getSnapshots = () =>
+  api.get<SnapshotSummary[]>("/snapshots").then((r) => r.data);
+
+export const getGraphLatest = () =>
+  api.get<Snapshot>("/graph/latest").then((r) => r.data);
+
+export const getGraph = (id: string) =>
+  api.get<Snapshot>(`/graph/${id}`).then((r) => r.data);
+
+export const getDrift = (baseId?: string, currId?: string) =>
+  api
+    .get<DriftEvent[]>("/drift/", { params: { base_id: baseId, curr_id: currId } })
+    .then((r) => r.data);
+
+export const getDriftSummary = () =>
+  api.get<DriftSummary>("/drift/summary").then((r) => r.data);
+
+export const getPolicies = () =>
+  api.get<PolicySuggestion[]>("/policies/").then((r) => r.data);
+
+export const approvePolicy = (id: string) =>
+  api.post(`/policies/${id}/approve`).then((r) => r.data);
+
+export const rejectPolicy = (id: string) =>
+  api.post(`/policies/${id}/reject`).then((r) => r.data);
+
+export const postFeedback = (eventId: string, verdict: string, comment?: string) =>
+  api.post("/feedback", { event_id: eventId, verdict, comment }).then((r) => r.data);
+
+export const getFeedbackStats = () =>
+  api.get<FeedbackStats>("/feedback/stats/async").then((r) => r.data);
+
+export const getWhitelist = () =>
+  api.get<WhitelistEntry[]>("/whitelist").then((r) => r.data);
+
+export const addWhitelist = (source: string, destination: string, reason: string) =>
+  api.post("/whitelist", { source, destination, reason }).then((r) => r.data);
+
+export const removeWhitelist = (source: string, destination: string) =>
+  api.delete(`/whitelist/${encodeURIComponent(source)}/${encodeURIComponent(destination)}`).then((r) => r.data);
+
+export const getBaseline = (source: string, destination: string) =>
+  api.get<Baseline>(`/baseline/${source}/${destination}`).then((r) => r.data);
+
+export const login = (email: string, password: string) =>
+  api.post<AuthResponse>("/auth/login", { email, password }).then((r) => r.data);
+
+export const getRootCause = (snapshotId: string) =>
+  api.get<RootCauseResponse>("/rca/root-cause", { params: { snapshot_id: snapshotId } }).then((r) => r.data);
+
+export const getBlastRadius = (service: string, snapshotId: string) =>
+  api.get<BlastRadiusResponse>("/rca/blast-radius", { params: { service, snapshot_id: snapshotId } }).then((r) => r.data);
+
+export const predictDrift = (changes: { add_services?: string[]; remove_services?: string[]; add_edges?: Record<string, string>[]; modify_configs?: Record<string, string>[] }) =>
+  api.post<PredictDriftResponse>("/rca/predict-drift", changes).then((r) => r.data);
+
+export default api;

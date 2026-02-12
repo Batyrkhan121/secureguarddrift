@@ -4,7 +4,6 @@
 import os
 import csv
 import time
-import sqlite3
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -29,11 +28,14 @@ from api.routes.policy_routes import router as policy_router, init_store as init
 from api.routes.gitops_routes import router as gitops_router, init_stores as init_gitops_stores
 from api.routes.integration_routes import router as integration_router
 from api.routes.ml_routes import router as ml_router
+from api.routes.rca_routes import router as rca_router, init_store as init_rca_store
+from api.websocket import router as ws_router
 from policy.storage import PolicyStore
 from gitops.storage import GitOpsPRStore
 
 # ---------------------------------------------------------------------------
 DASHBOARD_DIR = os.path.join(os.path.dirname(__file__), "..", "dashboard")
+FRONTEND_DIST = os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 
 # ---------------------------------------------------------------------------
@@ -62,7 +64,20 @@ async def lifespan(app: FastAPI):
     setup_logging()
     app.state.start_time = time.time()
     _bootstrap()
+    # Connect Redis (graceful — None if unavailable)
+    from cache.redis_client import connect_redis, close_redis
+    await connect_redis()
+    # Start WebSocket pub/sub listener (graceful — skips if no Redis)
+    import asyncio
+    from api.websocket import redis_subscriber
+    sub_task = asyncio.create_task(redis_subscriber())
     yield
+    sub_task.cancel()
+    try:
+        await sub_task
+    except asyncio.CancelledError:
+        pass
+    await close_redis()
 
 
 app = FastAPI(title="SecureGuardDrift API", version="0.1.0", lifespan=lifespan)
@@ -79,6 +94,9 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 # Static files
 app.mount("/static", StaticFiles(directory=DASHBOARD_DIR), name="static")
+# Serve React frontend build in production (if available)
+if os.path.isdir(FRONTEND_DIST):
+    app.mount("/app", StaticFiles(directory=FRONTEND_DIST, html=True), name="frontend")
 
 store = SnapshotStore(os.path.join(DATA_DIR, "snapshots.db"))
 policy_store = PolicyStore(os.path.join(DATA_DIR, "policies.db"))
@@ -88,6 +106,7 @@ init_drift_store(store)
 init_report_store(store)
 init_policy_store(policy_store)
 init_gitops_stores(policy_store, pr_store)
+init_rca_store(store)
 app.include_router(graph_router)
 app.include_router(drift_router)
 app.include_router(report_router)
@@ -95,6 +114,8 @@ app.include_router(policy_router)
 app.include_router(gitops_router)
 app.include_router(integration_router)
 app.include_router(ml_router)
+app.include_router(rca_router)
+app.include_router(ws_router)
 
 
 # ---------------------------------------------------------------------------
@@ -116,7 +137,7 @@ async def health():
     # DB check
     try:
         t0 = time.time()
-        with sqlite3.connect(store.db_path) as conn:
+        with store._backend.connection() as conn:
             conn.execute("SELECT 1")
         db_status = {"status": "ok", "latency_ms": round((time.time() - t0) * 1000, 1)}
     except Exception:
@@ -145,6 +166,15 @@ async def health():
     except (ImportError, Exception):
         pass
 
+    # Redis check
+    redis_status = {"status": "not_configured"}
+    try:
+        from cache.redis_client import ping as redis_ping
+        redis_ok = await redis_ping()
+        redis_status = {"status": "ok" if redis_ok else "unavailable"}
+    except Exception:
+        redis_status = {"status": "unavailable"}
+
     # overall status
     comp_statuses = [db_status["status"]]
     if db_status["status"] == "error":
@@ -163,6 +193,7 @@ async def health():
         "db_size_bytes": db_size,
         "components": {
             "database": db_status,
+            "redis": redis_status,
             "collector": {"status": "ok", "last_run": None},
             "scheduler": {"status": "ok", "next_run": None},
         },
