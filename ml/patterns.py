@@ -55,7 +55,11 @@ def detect_canary_pattern(current_event: DriftEvent) -> Optional[PatternResult]:
         return None
 
     # Проверяем request_count в details
-    request_count = current_event.details.get("request_count", 0)
+    request_count = current_event.details.get("request_count")
+    
+    # Если request_count не указан, пропускаем
+    if request_count is None:
+        return None
 
     # Canary: малый трафик (< 10 requests)
     if request_count > 0 and request_count < 10:
@@ -149,9 +153,9 @@ def recognize_pattern(events: list[DriftEvent], current_event: DriftEvent) -> Pa
         detect_canary_pattern(current_event),
     ]
 
-    # Возвращаем первый найденный паттерн с высоким confidence
+    # Возвращаем первый найденный паттерн с достаточным confidence
     for pattern in patterns:
-        if pattern and pattern.confidence >= 0.6:
+        if pattern and pattern.confidence >= 0.3:  # Threshold: 0.3
             return pattern
 
     # Если паттерн не найден

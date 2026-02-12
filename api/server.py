@@ -21,6 +21,7 @@ from api.routes.report_routes import router as report_router, init_store as init
 from api.routes.policy_routes import router as policy_router, init_store as init_policy_store
 from api.routes.gitops_routes import router as gitops_router, init_stores as init_gitops_stores
 from api.routes.integration_routes import router as integration_router
+from api.routes.ml_routes import router as ml_router
 from policy.storage import PolicyStore
 from gitops.storage import GitOpsPRStore
 
@@ -81,6 +82,7 @@ app.include_router(report_router)
 app.include_router(policy_router)
 app.include_router(gitops_router)
 app.include_router(integration_router)
+app.include_router(ml_router)
 
 
 # ---------------------------------------------------------------------------
