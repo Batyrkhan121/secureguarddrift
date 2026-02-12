@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from core.rate_limiter import RateLimitMiddleware
 
 from graph.storage import SnapshotStore
 from graph.builder import build_snapshot
@@ -64,6 +65,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RateLimitMiddleware)
 
 # Static files
 app.mount("/static", StaticFiles(directory=DASHBOARD_DIR), name="static")
