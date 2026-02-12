@@ -12,14 +12,14 @@ celery_app.conf.beat_schedule = {
         "args": ("default", "/var/log/secureguard/access.log"),
     },
     "cleanup-old-data": {
-        "task": "worker.tasks.snapshot.build_snapshot_task",
+        "task": "worker.tasks.drift.detect_drift_task",
         "schedule": crontab(hour=3, minute=0),
-        "args": ("default", "cleanup"),
+        "args": ("default", "scheduled-cleanup"),
         "options": {"queue": "maintenance"},
     },
     "update-baselines": {
         "task": "worker.tasks.drift.detect_drift_task",
         "schedule": crontab(minute="*/30"),
-        "args": ("default", "latest"),
+        "args": ("default", "scheduled-baseline"),
     },
 }

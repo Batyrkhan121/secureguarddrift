@@ -52,7 +52,7 @@ class TestBeatSchedule(unittest.TestCase):
     def test_cleanup_schedule(self):
         from worker.schedules import celery_app
         entry = celery_app.conf.beat_schedule["cleanup-old-data"]
-        self.assertIn("args", entry)
+        self.assertEqual(entry["task"], "worker.tasks.drift.detect_drift_task")
 
 
 class TestSnapshotTask(unittest.TestCase):

@@ -37,14 +37,17 @@ def send_notifications_task(self, tenant_id: str, event_ids: list[str]):
                 # Create minimal card for notification
                 from drift.explainer import ExplainCard
                 parts = event_id.split(":", 3)
+                event_type = parts[1] if len(parts) > 1 else "unknown"
+                risk_scores = {"new_edge": 60, "removed_edge": 40, "error_spike": 80,
+                               "latency_spike": 50, "traffic_spike": 55, "blast_radius_increase": 75}
                 card = ExplainCard(
-                    event_type=parts[1] if len(parts) > 1 else "unknown",
+                    event_type=event_type,
                     title=f"Drift: {event_id}",
                     what_changed=f"Drift event detected: {event_id}",
                     why_risk=["Automatic detection"],
                     affected=[parts[2] if len(parts) > 2 else "unknown"],
                     recommendation="Review the drift event in the dashboard",
-                    risk_score=70,
+                    risk_score=risk_scores.get(event_type, 50),
                     severity="high",
                     source=parts[2] if len(parts) > 2 else "unknown",
                     destination=parts[3] if len(parts) > 3 else "unknown",
