@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from db.base import Base
 from db.models import Tenant, User
 from db.repository import (
+    AuditRepository,
     BaselineRepository,
     DriftEventRepository,
     FeedbackRepository,
@@ -369,3 +370,70 @@ def test_alembic_migration():
     assert expected.issubset(set(inspector.get_table_names()))
 
     engine.dispose()
+
+
+# ---------------------------------------------------------------------------
+# 12. Drift event summary and status update
+# ---------------------------------------------------------------------------
+
+def test_drift_event_summary_and_status():
+    async def _test():
+        _, factory, tid = await _fresh_db()
+        events = [
+            {"event_type": "new_edge", "source": "a", "destination": "b",
+             "severity": "high", "risk_score": 80, "status": "open"},
+            {"event_type": "traffic_spike", "source": "c", "destination": "d",
+             "severity": "critical", "risk_score": 95, "status": "open"},
+            {"event_type": "removed_edge", "source": "e", "destination": "f",
+             "severity": "low", "risk_score": 20, "status": "open"},
+        ]
+        async with factory() as s:
+            repo = DriftEventRepository(s)
+            ids = await repo.save_events(events, tid)
+            await s.commit()
+        # summary
+        async with factory() as s:
+            repo = DriftEventRepository(s)
+            summary = await repo.get_summary(tid)
+            assert summary["total"] == 3
+            assert summary["critical"] == 1
+            assert summary["high"] == 1
+            assert summary["low"] == 1
+            # update status
+            ok = await repo.update_status(ids[0], "resolved", tid)
+            await s.commit()
+        assert ok
+        async with factory() as s:
+            repo = DriftEventRepository(s)
+            results = await repo.get_events(tid, status="resolved")
+            assert len(results) == 1
+            assert results[0]["status"] == "resolved"
+    _run(_test())
+
+
+# ---------------------------------------------------------------------------
+# 13. Audit log
+# ---------------------------------------------------------------------------
+
+def test_audit_log():
+    async def _test():
+        _, factory, tid = await _fresh_db()
+        async with factory() as s:
+            repo = AuditRepository(s)
+            await repo.log(tid, None, "snapshot.create", resource_type="snapshot",
+                           resource_id="snap-001", details={"count": 5}, ip="10.0.0.1")
+            await repo.log(tid, None, "drift.detect", resource_type="drift",
+                           details={"severity": "high"})
+            await s.commit()
+        async with factory() as s:
+            repo = AuditRepository(s)
+            logs = await repo.query(tid)
+            assert len(logs) == 2
+            # most recent first
+            assert logs[0]["action"] == "drift.detect"
+            assert logs[1]["action"] == "snapshot.create"
+            assert logs[1]["ip_address"] == "10.0.0.1"
+            # filter by action
+            filtered = await repo.query(tid, action="snapshot.create")
+            assert len(filtered) == 1
+    _run(_test())
