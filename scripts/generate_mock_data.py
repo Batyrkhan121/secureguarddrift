@@ -184,7 +184,7 @@ def main():
     print(f"\nDone! Wrote {total} rows to {args.output}")
     print(f"  Unique edges : {len(unique_edges)}")
     print(f"  Total errors : {errors} ({errors / total * 100:.1f}%)")
-    print(f"  Edges:")
+    print("  Edges:")
     for src, dst in sorted(unique_edges):
         count = sum(1 for r in rows if r[1] == src and r[2] == dst)
         errs = sum(1 for r in rows if r[1] == src and r[2] == dst and int(r[5]) >= 500)

@@ -6,6 +6,7 @@ import sqlite3
 from datetime import datetime
 
 from graph.models import Node, Edge, Snapshot
+from core.migrations import apply_migrations
 
 
 class SnapshotStore:
@@ -19,35 +20,8 @@ class SnapshotStore:
         self._init_db()
 
     def _init_db(self) -> None:
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS snapshots (
-                    snapshot_id    TEXT PRIMARY KEY,
-                    timestamp_start TEXT NOT NULL,
-                    timestamp_end   TEXT NOT NULL
-                )
-            """)
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS edges (
-                    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-                    snapshot_id     TEXT NOT NULL REFERENCES snapshots(snapshot_id),
-                    source          TEXT NOT NULL,
-                    destination     TEXT NOT NULL,
-                    request_count   INTEGER NOT NULL,
-                    error_count     INTEGER NOT NULL,
-                    avg_latency_ms  REAL NOT NULL,
-                    p99_latency_ms  REAL NOT NULL
-                )
-            """)
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS nodes (
-                    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                    snapshot_id TEXT NOT NULL REFERENCES snapshots(snapshot_id),
-                    name        TEXT NOT NULL,
-                    namespace   TEXT NOT NULL,
-                    node_type   TEXT NOT NULL
-                )
-            """)
+        """Initialize database using migration system."""
+        apply_migrations(self.db_path)
 
     # ------------------------------------------------------------------
     def save_snapshot(self, snapshot: Snapshot) -> None:
@@ -175,15 +149,35 @@ class SnapshotStore:
 
         return (previous, latest)
 
+    def delete_snapshot(self, snapshot_id: str) -> bool:
+        """Удаляет снапшот из базы данных.
+
+        Args:
+            snapshot_id: ID снапшота для удаления
+
+        Returns:
+            True если удален, False если не найден
+        """
+        with sqlite3.connect(self.db_path) as conn:
+            # Удаляем edges
+            conn.execute("DELETE FROM edges WHERE snapshot_id = ?", (snapshot_id,))
+            # Удаляем nodes
+            conn.execute("DELETE FROM nodes WHERE snapshot_id = ?", (snapshot_id,))
+            # Удаляем snapshot
+            cursor = conn.execute("DELETE FROM snapshots WHERE snapshot_id = ?", (snapshot_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
 
 if __name__ == "__main__":
-    import sys, os
+    import sys
+    import os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
     store = SnapshotStore()
     snapshots = store.list_snapshots()
     print(f"SnapshotStore: {store.db_path}")
-    print(f"  Tables created: OK")
+    print("  Tables created: OK")
     print(f"  Snapshots in DB: {len(snapshots)}")
     for s in snapshots:
         print(f"    {s['snapshot_id'][:12]}... {s['timestamp_start']} → {s['timestamp_end']}")

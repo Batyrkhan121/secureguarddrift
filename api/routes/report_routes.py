@@ -54,7 +54,8 @@ async def report_md(
 ):
     b, c = _pair(store, baseline_id, current_id)
     scored, cards, _, _ = _build_cards(b, c)
-    fd, tmp = tempfile.mkstemp(suffix=".md"); os.close(fd)
+    fd, tmp = tempfile.mkstemp(suffix=".md")
+    os.close(fd)
     content = generate_report(b, c, cards, output_path=tmp)
     return Response(content=content, media_type="text/markdown",
                     headers={"Content-Disposition": 'attachment; filename="drift_report.md"'})

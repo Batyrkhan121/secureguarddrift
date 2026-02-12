@@ -78,7 +78,8 @@ def build_snapshot(
 
 
 if __name__ == "__main__":
-    import sys, os
+    import sys
+    import os
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
     from collector.ingress_parser import parse_log_file, get_time_windows, filter_by_time_window

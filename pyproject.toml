@@ -16,7 +16,16 @@ dependencies = [
     "aiohttp>=3.9.0",
     "pyyaml>=6.0",
     "python-dotenv>=1.0.0",
+    "watchdog>=3.0.0",
+    "requests>=2.31.0",
+    "pydantic-settings>=2.0.0",
+    "numpy>=1.24.0",
+    "pyjwt>=2.8.0",
+    "gunicorn>=21.0.0",
 ]
+
+[tool.setuptools.packages.find]
+include = ["api*", "collector*", "graph*", "drift*", "scripts*", "policy*", "gitops*", "integrations*", "ml*", "auth*", "core*"]
 
 [project.optional-dependencies]
 dev = [
