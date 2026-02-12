@@ -2,7 +2,7 @@
 """Baseline profiling для определения нормального поведения каждого edge."""
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 import numpy as np
@@ -69,7 +69,7 @@ def build_baseline(
         error_rate_std=float(np.std(error_rates)),
         p99_latency_mean=float(np.mean(p99_latencies)),
         p99_latency_std=float(np.std(p99_latencies)),
-        last_updated=datetime.utcnow(),
+        last_updated=datetime.now(timezone.utc),
         sample_count=len(request_counts),
     )
 
@@ -101,7 +101,7 @@ def update_baseline(
             error_rate_std=0.0,
             p99_latency_mean=float(new_edge.p99_latency_ms),
             p99_latency_std=0.0,
-            last_updated=datetime.utcnow(),
+            last_updated=datetime.now(timezone.utc),
             sample_count=1,
         )
 
@@ -131,7 +131,7 @@ def update_baseline(
         error_rate_std=np.sqrt(new_error_var),
         p99_latency_mean=new_latency_mean,
         p99_latency_std=np.sqrt(new_latency_var),
-        last_updated=datetime.utcnow(),
+        last_updated=datetime.now(timezone.utc),
         sample_count=min(current_profile.sample_count + 1, window_size),
     )
 

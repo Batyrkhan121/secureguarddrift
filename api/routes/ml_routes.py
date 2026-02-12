@@ -1,7 +1,7 @@
 # api/routes/ml_routes.py
 """API endpoints для ML функциональности."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal, Optional
 
 from fastapi import APIRouter, HTTPException
@@ -58,7 +58,7 @@ async def submit_feedback(req: FeedbackRequest):
         verdict=req.verdict,
         comment=req.comment,
         user=req.user,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
     feedback_id = feedback_store.save_feedback(feedback)
@@ -70,7 +70,7 @@ async def submit_feedback(req: FeedbackRequest):
             source=req.source,
             destination=req.destination,
             reason=f"Auto-whitelisted from feedback: {req.comment or 'expected behavior'}",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             created_by=req.user,
         )
         whitelist_store.add_to_whitelist(entry)
@@ -106,7 +106,7 @@ async def add_to_whitelist(req: WhitelistRequest):
         source=req.source,
         destination=req.destination,
         reason=req.reason,
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
         created_by=req.created_by,
     )
 

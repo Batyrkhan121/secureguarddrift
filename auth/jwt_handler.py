@@ -2,9 +2,13 @@
 JWT token generation and validation.
 """
 import os
-from datetime import datetime, timedelta
+import secrets
+import logging
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 import jwt
+
+logger = logging.getLogger(__name__)
 
 
 class JWTHandler:
@@ -18,8 +22,57 @@ class JWTHandler:
             secret: JWT secret key (from env if not provided)
             algorithm: JWT algorithm (default HS256)
         """
-        self.secret = secret or os.getenv("JWT_SECRET", "dev-secret-change-in-production")
+        self.secret = self._get_validated_secret(secret)
         self.algorithm = algorithm
+    
+    def _get_validated_secret(self, provided_secret: Optional[str]) -> str:
+        """
+        Get and validate JWT secret.
+        
+        Args:
+            provided_secret: Provided secret (or None)
+            
+        Returns:
+            Validated secret string
+            
+        Raises:
+            ValueError: If secret is missing/invalid in production mode
+        """
+        # Get environment mode
+        env_mode = os.getenv("SECUREGUARD_ENV", "development").lower()
+        is_production = env_mode == "production"
+        
+        # Get secret from various sources
+        secret = provided_secret or os.getenv("JWT_SECRET")
+        
+        # Validate secret length
+        MIN_SECRET_LENGTH = 32
+        
+        if not secret:
+            if is_production:
+                raise ValueError(
+                    "JWT_SECRET is required in production mode. "
+                    "Set SECUREGUARD_ENV=production and JWT_SECRET environment variable."
+                )
+            # Auto-generate in development
+            secret = secrets.token_hex(32)
+            logger.warning(
+                "JWT_SECRET not provided. Auto-generated secret for development. "
+                "DO NOT use in production!"
+            )
+        elif len(secret) < MIN_SECRET_LENGTH:
+            if is_production:
+                raise ValueError(
+                    f"JWT_SECRET must be at least {MIN_SECRET_LENGTH} characters long. "
+                    f"Current length: {len(secret)}"
+                )
+            # Warn in development
+            logger.warning(
+                f"JWT_SECRET is too short ({len(secret)} chars, minimum {MIN_SECRET_LENGTH}). "
+                f"This is acceptable in development but INSECURE for production!"
+            )
+        
+        return secret
     
     def create_token(
         self,
@@ -45,7 +98,7 @@ class JWTHandler:
         if expires_delta is None:
             expires_delta = timedelta(hours=24)
         
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
         
         payload = {
             "user_id": user_id,

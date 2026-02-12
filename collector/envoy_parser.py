@@ -2,7 +2,7 @@
 # Парсинг Envoy access логов (Istio/Linkerd)
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def parse_envoy_log_line(line: str) -> dict | None:
@@ -43,7 +43,7 @@ def parse_envoy_log_line(line: str) -> dict | None:
             timestamp_str = timestamp_str[:-1] + "+00:00"
         timestamp = datetime.fromisoformat(timestamp_str)
     except (ValueError, AttributeError):
-        timestamp = datetime.utcnow()
+        timestamp = datetime.now(timezone.utc)
 
     # Извлечение destination из upstream_cluster
     # Формат: "outbound|8080||user-service.default.svc.cluster.local"

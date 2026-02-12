@@ -3,7 +3,7 @@
 
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         source="svc-a",
         destination="svc-b",
         reason="Known safe connection",
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
     entry_id = store.add_to_whitelist(entry)

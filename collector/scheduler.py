@@ -66,7 +66,7 @@ class SnapshotScheduler:
         from graph.builder import build_snapshot
         from collector.ingress_parser import filter_by_time_window
 
-        print(f"📸 Creating snapshot at {datetime.now()}")
+        print(f"📸 Creating snapshot at {datetime.now(timezone.utc)}")
 
         # Собираем все лог-файлы
         all_records = []
@@ -135,7 +135,7 @@ if __name__ == "__main__":
     test_log = os.path.join(test_dir, "test.csv")
     with open(test_log, "w") as f:
         f.write("timestamp,source_service,destination_service,http_method,path,status_code,latency_ms\n")
-        f.write(f"{datetime.utcnow().isoformat()}Z,api,user-svc,GET,/api,200,45.0\n")
+        f.write(f"{datetime.now(timezone.utc).isoformat()}Z,api,user-svc,GET,/api,200,45.0\n")
 
     store = SnapshotStore(test_db)
     scheduler = SnapshotScheduler(test_dir, store, interval_hours=1, max_snapshots=5)

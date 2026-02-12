@@ -3,7 +3,7 @@
 
 import socket
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 from drift.explainer import ExplainCard
 
 
@@ -76,7 +76,7 @@ class SIEMExporter:
         try:
             # Syslog header: <Priority>Timestamp Hostname Tag: Message
             priority = 134  # Local0.Info
-            timestamp = datetime.utcnow().strftime("%b %d %H:%M:%S")
+            timestamp = datetime.now(timezone.utc).strftime("%b %d %H:%M:%S")
             hostname = socket.gethostname()
             tag = "SecureGuardDrift"
 
@@ -108,7 +108,7 @@ class SIEMExporter:
                 "risk_score": card.risk_score,
                 "source": card.source,
                 "destination": card.destination,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
             response = requests.post(self.webhook_url, json=payload, timeout=10)

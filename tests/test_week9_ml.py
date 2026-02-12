@@ -2,7 +2,7 @@
 """Тесты для Week 9: ML/Intelligence."""
 
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -45,7 +45,7 @@ def test_z_score_anomaly_detection():
         error_rate_std=0.005,
         p99_latency_mean=50.0,
         p99_latency_std=5.0,
-        last_updated=datetime.utcnow(),
+        last_updated=datetime.now(timezone.utc),
         sample_count=10,
     )
 
@@ -113,7 +113,7 @@ def test_feedback_false_positive_reduces_score():
         event_type="new_edge",
         verdict="false_positive",
         comment="Expected deployment",
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
     store.save_feedback(feedback)
@@ -142,7 +142,7 @@ def test_whitelist_edge_filtering():
         source="svc-a",
         destination="svc-b",
         reason="Known safe connection",
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
     store.add_to_whitelist(entry)
@@ -165,7 +165,7 @@ def test_smart_scorer_integration():
         error_rate_std=0.005,
         p99_latency_mean=50.0,
         p99_latency_std=5.0,
-        last_updated=datetime.utcnow(),
+        last_updated=datetime.now(timezone.utc),
         sample_count=10,
     )
 
@@ -215,7 +215,7 @@ def test_update_baseline_incremental():
         error_rate_std=0.005,
         p99_latency_mean=50.0,
         p99_latency_std=5.0,
-        last_updated=datetime.utcnow(),
+        last_updated=datetime.now(timezone.utc),
         sample_count=10,
     )
 

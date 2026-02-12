@@ -2,7 +2,7 @@
 # Генерация Markdown-отчёта по drift-анализу
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from graph.models import Snapshot
 from drift.explainer import ExplainCard
 
@@ -90,7 +90,7 @@ def generate_report(
     lines += [
         "---",
         "*Отчёт сгенерирован SecureGuard Drift v0.1*  ",
-        f"*{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
+        f"*{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')} UTC*",
         "",
     ]
 

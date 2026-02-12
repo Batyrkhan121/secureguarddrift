@@ -3,7 +3,7 @@
 
 import sqlite3
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Literal, Optional
 
 
@@ -180,7 +180,7 @@ if __name__ == "__main__":
         event_type="new_edge",
         verdict="false_positive",
         comment="This is expected deployment",
-        created_at=datetime.utcnow(),
+        created_at=datetime.now(timezone.utc),
     )
 
     feedback_id = store.save_feedback(feedback)
